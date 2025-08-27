@@ -2,47 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Modern Portfolio Design System - Dark theme with teal & purple accents */
+/* Modern Portfolio Design System - Comfortable eye-friendly colors */
 
 @layer base {
   :root {
-    /* Dark Portfolio Theme */
-    --background: 222 84% 3%;
-    --foreground: 210 40% 98%;
+    /* Comfortable Dark Theme - Softer on the eyes */
+    --background: 215 25% 8%;
+    --foreground: 210 20% 95%;
 
-    --card: 222 84% 5%;
-    --card-foreground: 210 40% 98%;
+    --card: 215 25% 12%;
+    --card-foreground: 210 20% 95%;
 
-    --popover: 222 84% 5%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 215 25% 12%;
+    --popover-foreground: 210 20% 95%;
 
-    /* Teal Primary */
-    --primary: 172 82% 35%;
-    --primary-foreground: 222 84% 3%;
+    /* Soft Blue Primary - Easy on eyes */
+    --primary: 210 60% 65%;
+    --primary-foreground: 215 25% 8%;
 
-    /* Purple Secondary */
-    --secondary: 262 52% 47%;
-    --secondary-foreground: 210 40% 98%;
+    /* Warm Gray Secondary */
+    --secondary: 215 15% 25%;
+    --secondary-foreground: 210 20% 95%;
 
-    --muted: 222 84% 8%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 215 20% 18%;
+    --muted-foreground: 215 15% 70%;
 
-    /* Purple Accent */
-    --accent: 262 52% 47%;
-    --accent-foreground: 210 40% 98%;
+    /* Soft Green Accent - Calming */
+    --accent: 158 45% 55%;
+    --accent-foreground: 215 25% 8%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 210 20% 95%;
 
-    --border: 222 84% 10%;
-    --input: 222 84% 8%;
-    --ring: 172 82% 35%;
+    --border: 215 20% 22%;
+    --input: 215 20% 18%;
+    --ring: 210 60% 65%;
 
-    /* Portfolio specific colors */
-    --hero-gradient-start: 262 52% 47%;
-    --hero-gradient-end: 172 82% 35%;
-    --glass-bg: 222 84% 5%;
-    --glass-border: 222 84% 15%;
+    /* Portfolio specific colors - Softer gradients */
+    --hero-gradient-start: 210 60% 65%;
+    --hero-gradient-end: 158 45% 55%;
+    --glass-bg: 215 25% 12%;
+    --glass-border: 215 20% 25%;
     
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

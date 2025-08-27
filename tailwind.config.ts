@@ -52,7 +52,7 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				/* Portfolio specific colors */
+				/* Portfolio specific colors - Comfortable gradients */
 				hero: {
 					start: 'hsl(var(--hero-gradient-start))',
 					end: 'hsl(var(--hero-gradient-end))'
