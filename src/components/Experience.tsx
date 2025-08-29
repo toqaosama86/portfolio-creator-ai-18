@@ -5,50 +5,52 @@ import { MapPin, Calendar, ExternalLink } from "lucide-react";
 const Experience = () => {
   const experiences = [
     {
-      title: "Senior Full-Stack Developer",
+      title: "Web-Developer",
       company: "BestikWay",
-      period: "2022 - Present",
-      location: "Remote",
+      period: "4/2025 - Present",
+      location: "On-site",
       type: "Full-time",
-      description: "Leading development of scalable web applications using React, Node.js, and cloud technologies. Implemented AI-powered features that increased user engagement by 40%.",
-      technologies: ["React", "Node.js", "MongoDB", "AWS", "TypeScript"],
-      link: "https://bestikway.com"
+      description: "Leading development of scalable web applications using Wordpress , Shopify , Framer ,Figma . Implemented AI-powered features that increased user engagement by 40%.",
+      technologies: ["Wordpress", "Shopify", "Framer", "Figma", "Seo","Google-Analytics","UI/UX","Google-console"],
+      link: "https://bestik.net/"
+    },
+      {
+      title: "FrontEnd-Developer",
+      company: "Neurotech",
+      period: "9/2024 - 2/2025",
+      location: "On-site",
+      type: "Full-time",
+      description: "Leading development of scalable web applications using Wordpress .",
+      technologies: ["Wordpress"],
+      link: "https://neurotecheg.com/"
+    },
+     {
+      title: "Freelance Developer",
+      company: "Independent",
+      period: "2022 - 2025",
+      location: "Remote",
+      type: "Freelance",
+      description: "Delivered custom web solutions for small to medium businesses. Specialized in WordPress development, e-commerce platforms, and responsive design.",
+      technologies: ["React.js", "Angler", "JavaScript", "MySQL", "Bootstrap","Wordpress","Shopify"],
+      link: "null"
     },
     {
       title: "AI/ML Developer",
       company: "NeuroTech Solutions",
-      period: "2021 - 2022",
-      location: "San Francisco, CA",
-      type: "Contract",
-      description: "Developed machine learning models for computer vision applications. Built NLP systems for automated content analysis and sentiment detection.",
-      technologies: ["Python", "TensorFlow", "OpenCV", "NLP", "Docker"],
-      link: "https://neurotech.com"
-    },
-    {
-      title: "Freelance Developer",
-      company: "Independent",
-      period: "2020 - 2021",
-      location: "Remote",
-      type: "Freelance",
-      description: "Delivered custom web solutions for small to medium businesses. Specialized in WordPress development, e-commerce platforms, and responsive design.",
-      technologies: ["WordPress", "PHP", "JavaScript", "MySQL", "Bootstrap"],
-      link: null
-    },
-    {
-      title: "Software Development Intern",
-      company: "TechStart Inc",
-      period: "2020",
-      location: "Austin, TX",
+      period: "2024 - 2025",
+      location: "Dokii-Cairo, Egypt",
       type: "Internship",
-      description: "Contributed to frontend development of customer-facing applications. Gained experience with modern JavaScript frameworks and agile development practices.",
-      technologies: ["React", "Redux", "REST APIs", "Git", "Figma"],
-      link: "https://techstart.com"
-    }
+      description: "Developed machine learning models for computer vision applications. Built NLP systems for automated content analysis and sentiment detection.",
+      technologies: ["Python", "TensorFlow", "OpenCV", "NLP", "Docker", "Keras", "Flask",],
+      link: "https://neurotecheg.com/"
+    },
+   
+
   ];
 
   return (
     <section id="experience" className="py-20 bg-muted/30">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-2">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-4xl font-bold text-center mb-12">
             <span className="gradient-text">Professional Experience</span>

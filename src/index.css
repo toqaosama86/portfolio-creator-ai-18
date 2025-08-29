@@ -121,7 +121,7 @@
   .glass {
     background: rgba(13, 31, 36, 0.8);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(var(--glass-border) / 0.2);
+    border: 1px solid (rgba(21, 83, 179, 0.41) / 0.2);
   }
   
   /* Gradient text */

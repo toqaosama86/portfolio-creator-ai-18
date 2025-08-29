@@ -14,38 +14,44 @@ const Skills = () => {
     {
       title: "Frontend Development",
       icon: <Code className="h-6 w-6" />,
-      skills: ["React.js", "TypeScript", "HTML5", "CSS3", "Tailwind CSS", "Bootstrap", "WordPress"],
+      skills: ["React.js", "TypeScript", "HTML", "CSS", "Tailwind CSS", "Bootstrap", "WordPress" , "ui/ux","Shopify","Framer","Anguler"],
       color: "primary"
     },
     {
+      title: "Database ",
+      icon: <Database className="h-6 w-6" />,
+      skills: ["MySQL", "PhpMyAdmin", "Firebase", "PostMan"],
+      color: "accent"
+    },
+       {
       title: "Backend Development", 
       icon: <Server className="h-6 w-6" />,
-      skills: ["Node.js", "Express.js", "Python", "REST APIs", "GraphQL"],
+      skills: ["Node.js",  "Python", " APIs"],
       color: "secondary"
-    },
-    {
-      title: "Database & Cloud",
-      icon: <Database className="h-6 w-6" />,
-      skills: ["MySQL", "MongoDB", "Firebase", "PostgreSQL", "AWS", "Google Cloud"],
-      color: "accent"
     },
     {
       title: "AI & Machine Learning",
       icon: <Brain className="h-6 w-6" />,
-      skills: ["Python", "Scikit-learn", "TensorFlow", "Keras", "NLP", "Computer Vision", "OpenAI APIs"],
+      skills: ["Python", "Scikit-learn", "TensorFlow", "Keras", "NLP", "Computer Vision", "Deep Learning", "Reinforcement Learning","Machine Learning"],
       color: "primary"
     },
     {
       title: "Tools & Workflow",
       icon: <Wrench className="h-6 w-6" />,
-      skills: ["Git", "GitHub", "Docker", "Postman", "VS Code", "Linux"],
+      skills: ["Git", "GitHub",  "Postman", "VS Code", "Xampp","Hostinger","PhpMyAdmin","MySql","Google-Analytics","Google-Console"],
       color: "secondary"
     },
     {
       title: "Design & UI/UX",
       icon: <Palette className="h-6 w-6" />,
-      skills: ["Figma", "Adobe XD", "Responsive Design", "User Experience", "Prototyping"],
+      skills: ["Figma", "Adobe XD", "Responsive Design", "User Experience", "Photoshop","Canva"],
       color: "accent"
+    },
+     {
+      title: "DataEntry & Management",
+      icon: <Palette className="h-6 w-6" />,
+      skills: ["Wordpress", "Excel"],
+      color: "primary"
     }
   ];
 

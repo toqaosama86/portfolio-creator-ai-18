@@ -1,38 +1,59 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { 
-  Mail, 
-  MapPin, 
-  Phone, 
-  Github, 
-  Linkedin, 
-  Twitter,
-  Send
-} from "lucide-react";
+import { Mail, MapPin, Phone, Github, Linkedin, Send } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import emailjs from "@emailjs/browser";   // ✅ fixed import
 
 const Contact = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     subject: "",
-    message: ""
+    message: "",
   });
-  
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // For now, just show a toast. Later this can integrate with Supabase
-    toast({
-      title: "Message Sent!",
-      description: "Thank you for your message. I'll get back to you soon!",
-    });
-    setFormData({ name: "", email: "", subject: "", message: "" });
+    setIsSubmitting(true);
+
+    const serviceID = "service_klf4p8h";   // 🔹 replace with your EmailJS service ID
+    const templateID = "template_omft54k"; // 🔹 replace with your template ID
+    const publicKey = "CLFP4f4l-DHeen9E8"; // 🔹 replace with your public key
+
+    const templateParams = {
+      from_name: formData.name,
+      from_email: formData.email,
+      subject: formData.subject,
+      message: formData.message,
+    };
+
+    emailjs.send(serviceID, templateID, templateParams, publicKey).then(
+      () => {
+        toast({
+          title: "Message Sent!",
+          description: "Your message has been sent successfully.",
+        });
+        setFormData({ name: "", email: "", subject: "", message: "" });
+        setIsSubmitting(false);
+      },
+      (error) => {
+        console.error("EmailJS Error:", error);
+        toast({
+          title: "Error",
+          description: "Something went wrong. Please try again.",
+        });
+        setIsSubmitting(false);
+      }
+    );
   };
 
   return (
@@ -59,10 +80,10 @@ const Contact = () => {
                 </CardHeader>
                 <CardContent>
                   <a 
-                    href="mailto:john.doe@example.com"
+                    href="mailto:toqaosama86@gmail.com"
                     className="text-muted-foreground hover:text-primary transition-colors"
                   >
-                    john.doe@example.com
+                   toqaosama86@gmail.com
                   </a>
                 </CardContent>
               </Card>
@@ -76,10 +97,10 @@ const Contact = () => {
                 </CardHeader>
                 <CardContent>
                   <a 
-                    href="tel:+1234567890"
+                    href="tel:+201155388410"
                     className="text-muted-foreground hover:text-primary transition-colors"
                   >
-                    +1 (234) 567-8900
+                  01155388410
                   </a>
                 </CardContent>
               </Card>
@@ -93,7 +114,7 @@ const Contact = () => {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground">
-                    Remote / Available Worldwide
+                    Cairo, Egypt / Remote
                   </p>
                 </CardContent>
               </Card>
@@ -106,7 +127,7 @@ const Contact = () => {
                 <CardContent>
                   <div className="flex gap-4">
                     <a 
-                      href="https://github.com"
+                      href="https://github.com/toqaosama"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-2 rounded-lg bg-card hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
@@ -114,20 +135,12 @@ const Contact = () => {
                       <Github className="h-5 w-5" />
                     </a>
                     <a 
-                      href="https://linkedin.com"
+                      href="https://linkedin.com/in/toqa-osama-7b19b9225/"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-2 rounded-lg bg-card hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
                     >
                       <Linkedin className="h-5 w-5" />
-                    </a>
-                    <a 
-                      href="https://twitter.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 rounded-lg bg-card hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      <Twitter className="h-5 w-5" />
                     </a>
                   </div>
                 </CardContent>
@@ -189,9 +202,26 @@ const Contact = () => {
                       />
                     </div>
                     
-                    <Button type="submit" size="lg" className="w-full group">
-                      <Send className="h-4 w-4 mr-2 group-hover:translate-x-1 transition-transform" />
-                      Send Message
+                    <Button 
+                      type="submit" 
+                      size="lg" 
+                      className="w-full group"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <span className="flex items-center">
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.3 0 0 5.3 0 12h4zm2 5.3A8 8 0 014 12H0c0 3 1.1 5.8 3 7.9l3-2.6z"></path>
+                          </svg>
+                          Sending...
+                        </span>
+                      ) : (
+                        <span className="flex items-center">
+                          <Send className="h-4 w-4 mr-2 group-hover:translate-x-1 transition-transform" />
+                          Send Message
+                        </span>
+                      )}
                     </Button>
                   </form>
                 </CardContent>

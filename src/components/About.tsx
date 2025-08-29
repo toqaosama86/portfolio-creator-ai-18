@@ -19,10 +19,7 @@ const About = () => {
                     Professional Summary
                   </h3>
                   <p className="text-lg text-muted-foreground leading-relaxed">
-                    Innovative Software Developer with 3+ years of experience in full-stack development 
-                    and AI/ML implementations. Proven track record of delivering scalable web applications 
-                    and intelligent systems. Passionate about leveraging cutting-edge technologies to solve 
-                    complex problems and drive business growth.
+                    Motivated Software Engineer with a strong foundation in Computer Science and Artificial Intelligence and hands-on experience in frontend development, backend integration, and AI applications. Skilled in building responsive, user-friendly web applications using React.js, WordPress, and modern UI/UX practices, alongside practical knowledge in Node.js, RESTful APIs. Experienced in applying machine learning, deep learning, computer vision, and reinforcement learning to solve real-world problems through academic projects and internships. Proficient in multiple programming languages including Python, JavaScript, C++, and Java, with strong problem-solving abilities and a passion for continuous learning. Adept at collaborating in both freelance and organizational settings to deliver high-quality, scalable solutions. Open to diverse roles across frontend development, full-stack engineering, and AI-powered systems.
                   </p>
                   <p className="text-lg text-muted-foreground leading-relaxed mt-4">
                     Experienced in modern JavaScript frameworks, Python development, and cloud technologies. 
@@ -38,7 +35,7 @@ const About = () => {
                   </h3>
                   
                   <a 
-                    href="https://github.com" 
+                    href="https://github.com/toqaosama" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 p-3 rounded-lg bg-card hover:bg-primary/10 transition-colors group"
@@ -49,7 +46,7 @@ const About = () => {
                   </a>
 
                   <a 
-                    href="https://linkedin.com" 
+                    href="https://www.linkedin.com/in/toqa-osama-7b19b9225?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 p-3 rounded-lg bg-card hover:bg-primary/10 transition-colors group"
@@ -61,12 +58,12 @@ const About = () => {
 
                   <div className="pt-4">
                     <h4 className="font-semibold text-primary mb-2">Location</h4>
-                    <p className="text-muted-foreground">Remote / Global</p>
+                    <p className="text-muted-foreground">Remote / Global /On-Site</p>
                   </div>
 
                   <div>
                     <h4 className="font-semibold text-primary mb-2">Experience</h4>
-                    <p className="text-muted-foreground">3+ Years</p>
+                    <p className="text-muted-foreground">1+ Years</p>
                   </div>
                 </div>
               </div>
