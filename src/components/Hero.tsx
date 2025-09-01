@@ -3,6 +3,16 @@ import { Download, Mail, Github, Linkedin } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const Hero = () => {
+
+  
+  const scrollToSection = (href: string) => {
+    const element = document.querySelector(href);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+    setIsOpen(false);
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image with Overlay */}
@@ -26,8 +36,7 @@ const Hero = () => {
             Software Developer
           </p>
           <p className="text-lg max-w-2xl mx-auto mb-12 leading-relaxed">
-            Passionate about creating innovative solutions with modern technologies. 
-            Specializing in React, Node.js, Python, and AI/ML implementations.
+        Passionate about building innovative digital solutions with modern technologies. Skilled in React, WordPress, and Shopify development, with growing expertise in Angular. Experienced in leveraging Node.js, Python, and AI/ML for scalable applications. Dedicated to continuous learning, problem-solving, and working hard to achieve career goals in software engineering.
           </p>
         </div>
 
@@ -39,7 +48,13 @@ const Hero = () => {
           </Button>
           <Button variant="outline" size="lg" className="group">
             <Mail className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
-            Get In Touch
+               <a
+        href="#contact"
+        onClick={(e) => { e.preventDefault(); scrollToSection('#contact'); }}
+        style={{background: 'rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box', padding: '14.4px', borderRadius: '50%', display: 'flex', color: 'rgba(255, 255, 255, 0.6)', fontSize: '17.6px', transition: 'all', margin: '0px', border: '0px none rgba(255, 255, 255, 0.6)', outline: 'rgba(255, 255, 255, 0.6) none 0px', boxSizing: 'border-box', listStyle: 'outside none none', textDecoration: 'none solid rgba(255, 255, 255, 0.6)'}}
+      >
+         Get In Touch
+      </a>
           </Button>
         </div>
 

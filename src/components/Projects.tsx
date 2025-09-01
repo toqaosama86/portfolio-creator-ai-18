@@ -16,7 +16,7 @@ interface Project {
   images: string[];
   live_url?: string;
   featured: boolean;
-  category: "wordpress" | "coding" | "design";
+  category: "wordpress" | "coding" | "design" | "Freelance" ;
 }
 
 const Projects = () => {
