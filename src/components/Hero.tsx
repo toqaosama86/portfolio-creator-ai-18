@@ -42,10 +42,19 @@ const Hero = () => {
 
         {/* Action Buttons */}
         <div className="animate-slide-up flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-          <Button variant="default" size="lg" className="group">
-            <Download className="mr-2 h-5 w-5 group-hover:animate-bounce" />
-            Download CV
-          </Button>
+
+  <Button variant="default" size="lg" className="group">
+    <Download className="mr-2 h-5 w-5 group-hover:animate-bounce" />
+<a
+  href="https://drive.google.com/uc?export=download&id=1YImPBKEUSkcWF9nrw9xhiF9Ja9h4ptmn"
+  target="_blank"
+  rel="noopener noreferrer"
+>
+    Download CV
+</a>
+  </Button>
+
+
           <Button variant="outline" size="lg" className="group">
             <Mail className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
                <a
