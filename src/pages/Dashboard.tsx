@@ -258,7 +258,7 @@ function ProjectsPage({ setActiveTab }) {
   return (
     <>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold">📊 Projects</h2>
+        <h2 className="text-3xl font-bold"> Projects</h2>
         <button
           onClick={() => {
             setProjectForm({
@@ -665,7 +665,7 @@ function SkillsPage({ setActiveTab }) {
   return (
     <>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold">💻 Skills</h2>
+        <h2 className="text-3xl font-bold"> Skills</h2>
         <button
           onClick={() => {
             setSkillForm({
@@ -1022,7 +1022,7 @@ function ExperiencesPage({ setActiveTab }) {
   return (
     <>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold">💼 Experiences</h2>
+        <h2 className="text-3xl font-bold"> Experiences</h2>
         <button
           onClick={() => {
             setExperienceForm({
