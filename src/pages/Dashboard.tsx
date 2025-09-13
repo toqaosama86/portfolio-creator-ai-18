@@ -25,7 +25,7 @@ function DashboardLayout({ activeTab, setActiveTab, children }) {
     <div className="flex h-screen bg-gray-900 text-gray-100">
       {/* Sidebar */}
       <aside className="w-64 bg-gray-800 p-6 flex flex-col">
-        <h1 className="text-2xl font-bold mb-10">🚀 My Dashboard</h1>
+        <h1 className="text-2xl font-bold mb-10"> My Dashboard</h1>
         <nav className="flex flex-col space-y-4">
           <a 
             className={`flex items-center space-x-2 cursor-pointer ${activeTab === "projects" ? "text-white" : "text-gray-300 hover:text-white"}`}
@@ -342,7 +342,7 @@ function ProjectsPage({ setActiveTab }) {
                       ? p.technologies.join(", ")
                       : p.technologies}
                   </td>
-                  <td className="p-3">{p.featured ? "✅" : "❌"}</td>
+                  <td className="p-3">{p.featured ? "Done" : "False"}</td>
                   <td className="p-3 flex space-x-2">
                     <button
                       onClick={() => handleEditProject(p)}
