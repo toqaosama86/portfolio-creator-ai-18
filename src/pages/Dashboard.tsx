@@ -7,6 +7,7 @@ import {
   PlusCircle,
   Edit3,
   Trash2,
+  Mail,
   Code,
   Server,
   Brain,
@@ -41,6 +42,13 @@ function DashboardLayout({ activeTab, setActiveTab, children }) {
             <Code size={18} />
             <span>Skills</span>
           </a>
+            <a 
+              className={`flex items-center space-x-2 cursor-pointer ${activeTab === "contacts" ? "text-white" : "text-gray-300 hover:text-white"}`}
+              onClick={() => setActiveTab("contacts")}
+            >
+              <Mail size={18} />
+              <span>Contacts</span>
+            </a>
           <a 
             className={`flex items-center space-x-2 cursor-pointer ${activeTab === "experiences" ? "text-white" : "text-gray-300 hover:text-white"}`}
             onClick={() => setActiveTab("experiences")}
@@ -1240,7 +1248,116 @@ export default function Dashboard() {
     <DashboardLayout activeTab={activeTab} setActiveTab={setActiveTab}>
       {activeTab === "projects" && <ProjectsPage setActiveTab={setActiveTab} />}
       {activeTab === "skills" && <SkillsPage setActiveTab={setActiveTab} />}
+      {activeTab === "contacts" && <ContactsPage setActiveTab={setActiveTab} />}
       {activeTab === "experiences" && <ExperiencesPage setActiveTab={setActiveTab} />}
     </DashboardLayout>
+  );
+}
+
+// Contacts Page Component
+function ContactsPage() {
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let channel;
+
+    const fetchMessages = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("contact_messages")
+          .select("id, name, email, subject, message, created_at")
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Fetch contacts error:", error);
+          setError(error.message || "Failed to fetch messages");
+        } else {
+          setMessages(data || []);
+        }
+      } catch (err) {
+        console.error("Unexpected error fetching contacts:", err);
+        setError("An unexpected error occurred");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMessages();
+
+    // subscribe to realtime inserts so dashboard updates when new messages arrive
+    try {
+      channel = supabase
+        .channel('public:contact_messages')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'contact_messages' }, (payload) => {
+          const newRow = payload.new;
+          setMessages((prev) => [newRow, ...prev]);
+        })
+        .subscribe();
+    } catch (subErr) {
+      console.warn('Realtime subscription could not be created:', subErr);
+    }
+
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-bold"> Contact Messages</h2>
+      </div>
+
+      {error && (
+        <div className="bg-red-800 text-white p-3 rounded mb-4">
+          <div className="font-bold mb-1">Error:</div>
+          <div>{error}</div>
+        </div>
+      )}
+
+      {messages.length === 0 ? (
+        <div className="bg-gray-800 p-6 rounded-lg text-center">
+          <Mail size={48} className="mx-auto text-gray-400 mb-4" />
+          <h3 className="text-xl font-semibold mb-2">No messages yet</h3>
+          <p className="text-gray-400 mb-4">Messages sent via the contact form will appear here.</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto bg-gray-800 rounded-lg shadow">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-gray-700 text-gray-300">
+                <th className="p-3">Name</th>
+                <th className="p-3">Email</th>
+                <th className="p-3">Subject</th>
+                <th className="p-3">Message</th>
+                <th className="p-3">Received</th>
+              </tr>
+            </thead>
+            <tbody>
+              {messages.map((m) => (
+                <tr key={m.id} className="border-b border-gray-700 hover:bg-gray-700 align-top">
+                  <td className="p-3 align-top">{m.name}</td>
+                  <td className="p-3 align-top">{m.email}</td>
+                  <td className="p-3 align-top">{m.subject}</td>
+                  <td className="p-3 align-top max-w-xl whitespace-pre-wrap">{m.message}</td>
+                  <td className="p-3 align-top">{m.created_at ? new Date(m.created_at).toLocaleString() : "-"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
   );
 }

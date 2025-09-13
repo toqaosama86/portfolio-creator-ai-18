@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Mail, MapPin, Phone, Github, Linkedin, Send } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import emailjs from "@emailjs/browser";   // ✅ fixed import
+import emailjs from "@emailjs/browser";
+import { supabase } from "../integrations/supabase/client";  // ✅ Supabase client
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -21,7 +22,7 @@ const Contact = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -36,24 +37,86 @@ const Contact = () => {
       message: formData.message,
     };
 
-    emailjs.send(serviceID, templateID, templateParams, publicKey).then(
-      () => {
+    try {
+      // Quick runtime checks for common misconfiguration
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl || !supabaseAnonKey) {
+        console.error('Missing Supabase env vars', { supabaseUrl, supabaseAnonKey });
         toast({
-          title: "Message Sent!",
-          description: "Your message has been sent successfully.",
-        });
-        setFormData({ name: "", email: "", subject: "", message: "" });
-        setIsSubmitting(false);
-      },
-      (error) => {
-        console.error("EmailJS Error:", error);
-        toast({
-          title: "Error",
-          description: "Something went wrong. Please try again.",
+          title: 'Supabase not configured',
+          description:
+            'VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is missing. Add them to your environment (.env) and restart dev server.',
         });
         setIsSubmitting(false);
+        return;
       }
-    );
+
+      // 1. Save message into Supabase first so it always appears in the dashboard
+      const { data: saved, error: insertError } = await supabase.from("contact_messages").insert([
+        {
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          message: formData.message,
+        },
+      ]).select();
+
+      if (insertError) {
+        console.error("Supabase insert error:", insertError);
+
+        // Provide actionable guidance when Row Level Security or permissions block the insert
+        const msg = insertError.message || String(insertError);
+        const isPermission = /permission|row level security|RLS|forbidden|not authorized|401|403/i.test(msg);
+
+        if (isPermission) {
+          toast({
+            title: 'Save failed - permission',
+            description:
+              `Insert blocked: ${msg}. If you use Row Level Security (RLS), allow public inserts or require authentication. For quick testing you can disable RLS on the table.`,
+          });
+        } else {
+          toast({
+            title: 'Save failed',
+            description: msg,
+          });
+        }
+
+        return;
+      }
+
+      toast({
+        title: "Message Saved",
+        description: "Your message was saved. Attempting to send email...",
+      });
+
+      // 2. Attempt to send email via EmailJS but don't fail the whole flow if it errors
+      try {
+        await emailjs.send(serviceID, templateID, templateParams, publicKey);
+        toast({
+          title: "Email Sent",
+          description: "Notification email sent successfully.",
+        });
+      } catch (emailErr) {
+        console.error("EmailJS error:", emailErr);
+        const emailMsg = emailErr?.text || emailErr?.message || String(emailErr);
+        toast({
+          title: "Email Send Failed",
+          description: `Message saved but email failed: ${emailMsg}. Check EmailJS credentials.`,
+        });
+      }
+
+      setFormData({ name: "", email: "", subject: "", message: "" });
+    } catch (error) {
+      console.error("Submit Error:", error);
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -83,7 +146,7 @@ const Contact = () => {
                     href="mailto:toqaosama86@gmail.com"
                     className="text-muted-foreground hover:text-primary transition-colors"
                   >
-                   toqaosama86@gmail.com
+                    toqaosama86@gmail.com
                   </a>
                 </CardContent>
               </Card>
@@ -100,7 +163,7 @@ const Contact = () => {
                     href="tel:+201155388410"
                     className="text-muted-foreground hover:text-primary transition-colors"
                   >
-                  01155388410
+                    01155388410
                   </a>
                 </CardContent>
               </Card>
