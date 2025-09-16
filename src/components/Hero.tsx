@@ -46,7 +46,7 @@ const Hero = () => {
   <Button variant="default" size="lg" className="group">
     <Download className="mr-2 h-5 w-5 group-hover:animate-bounce" />
 <a
-  href="https://drive.google.com/file/d/13Qw9ZKcLkrWKjsjrYDNBaX_5olc2fLNl/view?usp=drivesdk"
+  href="https://drive.google.com/file/d/1hzfagDyajyeseTIHeNkG61mF2LU6bVHy/view?usp=drivesdk"
   target="_blank"
   rel="noopener noreferrer"
 >
