@@ -30,19 +30,12 @@ const Hero = () => {
             <span className="gradient-text">Toqa Osama</span>
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground mb-2">
-           React.Js Developer
+           Front-end Developer | React.Js Developer
           </p>
           <p className="text-lg md:text-xl text-accent mb-8">
             Software Developer
           </p>
-          <p className="text-lg max-w-2xl mx-auto mb-12 leading-relaxed">
-Front-End Software Engineer with 1+ year of hands-on experience building production-ready, scalable, and
-responsive applications using React.js, JavaScript, and modern UI patterns. Delivered multiple deployed
-freelance projects, integrated REST APIs, implemented reusable components, and optimized performance.
-Strong foundation in Computer Science, UI/UX, and system design. Experience integrating ERP systems
-(Edra ERP) into web applications, mapping workflows, and building data-driven UIs. Growing expertise in
-TypeScript, Next.js, Angular, testing , and performance optimization.
-Passionate about building intuitive interfaces and contributing to high-impact global engineering teams.          </p>
+          
         </div>
 
         {/* Action Buttons */}
