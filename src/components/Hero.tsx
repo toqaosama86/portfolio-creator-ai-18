@@ -36,8 +36,13 @@ const Hero = () => {
             Software Developer
           </p>
           <p className="text-lg max-w-2xl mx-auto mb-12 leading-relaxed">
-        Passionate about building innovative digital solutions with modern technologies. Skilled in React, WordPress, and Shopify development, with growing expertise in Angular. Experienced in leveraging Node.js, Python, and AI/ML for scalable applications. Dedicated to continuous learning, problem-solving, and working hard to achieve career goals in software engineering.
-          </p>
+Front-End Software Engineer with 1+ year of hands-on experience building production-ready, scalable, and
+responsive applications using React.js, JavaScript, and modern UI patterns. Delivered multiple deployed
+freelance projects, integrated REST APIs, implemented reusable components, and optimized performance.
+Strong foundation in Computer Science, UI/UX, and system design. Experience integrating ERP systems
+(Edra ERP) into web applications, mapping workflows, and building data-driven UIs. Growing expertise in
+TypeScript, Next.js, Angular, testing , and performance optimization.
+Passionate about building intuitive interfaces and contributing to high-impact global engineering teams.          </p>
         </div>
 
         {/* Action Buttons */}
@@ -46,7 +51,7 @@ const Hero = () => {
   <Button variant="default" size="lg" className="group">
     <Download className="mr-2 h-5 w-5 group-hover:animate-bounce" />
 <a
-  href="https://drive.google.com/file/d/1hzfagDyajyeseTIHeNkG61mF2LU6bVHy/view?usp=drivesdk"
+  href="https://drive.google.com/file/d/1y-2bHZJjpPFoX71Nmit9PsSp6aEfkWjE/view?usp=drivesdk"
   target="_blank"
   rel="noopener noreferrer"
 >
