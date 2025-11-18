@@ -19,12 +19,13 @@ const About = () => {
                     Professional Summary
                   </h3>
                   <p className="text-lg text-muted-foreground leading-relaxed">
-                    Motivated Software Engineer with a strong foundation in Computer Science and Artificial Intelligence and hands-on experience in frontend development, backend integration, and AI applications. Skilled in building responsive, user-friendly web applications using React.js, WordPress, and modern UI/UX practices, alongside practical knowledge in Node.js, RESTful APIs. Experienced in applying machine learning, deep learning, computer vision, and reinforcement learning to solve real-world problems through academic projects and internships. Proficient in multiple programming languages including Python, JavaScript, C++, and Java, with strong problem-solving abilities and a passion for continuous learning. Adept at collaborating in both freelance and organizational settings to deliver high-quality, scalable solutions. Open to diverse roles across frontend development, full-stack engineering, and AI-powered systems.
-                  </p>
-                  <p className="text-lg text-muted-foreground leading-relaxed mt-4">
-                    Experienced in modern JavaScript frameworks, Python development, and cloud technologies. 
-                    Strong background in machine learning, natural language processing, and computer vision 
-                    with a focus on practical applications.
+Front-End Software Engineer with 1+ year of hands-on experience building production-ready, scalable, and
+responsive applications using React.js, JavaScript, and modern UI patterns. Delivered multiple deployed
+freelance projects, integrated REST APIs, implemented reusable components, and optimized performance.
+Strong foundation in Computer Science, UI/UX, and system design. Experience integrating ERP systems
+(Edra ERP) into web applications, mapping workflows, and building data-driven UIs. Growing expertise in
+TypeScript, Next.js, Angular, testing , and performance optimization.
+Passionate about building intuitive interfaces and contributing to high-impact global engineering teams.
                   </p>
                 </div>
 
