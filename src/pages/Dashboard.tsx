@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../integrations/supabase/client";
 import {
-  LayoutDashboard,
   FolderKanban,
   Settings,
   PlusCircle,
@@ -15,9 +14,6 @@ import {
   Palette,
   Database,
   Briefcase,
-  MapPin,
-  Calendar,
-  ExternalLink
 } from "lucide-react";
 
 // Dashboard Layout Component
@@ -25,38 +21,59 @@ function DashboardLayout({ activeTab, setActiveTab, children }) {
   return (
     <div className="flex h-screen bg-gray-900 text-gray-100">
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-800 p-6 flex flex-col">
-        <h1 className="text-2xl font-bold mb-10"> My Dashboard</h1>
+      <aside className="flex w-64 flex-col bg-gray-800 p-6">
+        <h1 className="mb-10 text-2xl font-bold">My Dashboard</h1>
+
         <nav className="flex flex-col space-y-4">
-          <a 
-            className={`flex items-center space-x-2 cursor-pointer ${activeTab === "projects" ? "text-white" : "text-gray-300 hover:text-white"}`}
+          <a
+            className={`flex cursor-pointer items-center space-x-2 ${
+              activeTab === "projects"
+                ? "text-white"
+                : "text-gray-300 hover:text-white"
+            }`}
             onClick={() => setActiveTab("projects")}
           >
             <FolderKanban size={18} />
             <span>Projects</span>
           </a>
-          <a 
-            className={`flex items-center space-x-2 cursor-pointer ${activeTab === "skills" ? "text-white" : "text-gray-300 hover:text-white"}`}
+
+          <a
+            className={`flex cursor-pointer items-center space-x-2 ${
+              activeTab === "skills"
+                ? "text-white"
+                : "text-gray-300 hover:text-white"
+            }`}
             onClick={() => setActiveTab("skills")}
           >
             <Code size={18} />
             <span>Skills</span>
           </a>
-            <a 
-              className={`flex items-center space-x-2 cursor-pointer ${activeTab === "contacts" ? "text-white" : "text-gray-300 hover:text-white"}`}
-              onClick={() => setActiveTab("contacts")}
-            >
-              <Mail size={18} />
-              <span>Contacts</span>
-            </a>
-          <a 
-            className={`flex items-center space-x-2 cursor-pointer ${activeTab === "experiences" ? "text-white" : "text-gray-300 hover:text-white"}`}
+
+          <a
+            className={`flex cursor-pointer items-center space-x-2 ${
+              activeTab === "contacts"
+                ? "text-white"
+                : "text-gray-300 hover:text-white"
+            }`}
+            onClick={() => setActiveTab("contacts")}
+          >
+            <Mail size={18} />
+            <span>Contacts</span>
+          </a>
+
+          <a
+            className={`flex cursor-pointer items-center space-x-2 ${
+              activeTab === "experiences"
+                ? "text-white"
+                : "text-gray-300 hover:text-white"
+            }`}
             onClick={() => setActiveTab("experiences")}
           >
             <Briefcase size={18} />
             <span>Experiences</span>
           </a>
-          <a className="flex items-center space-x-2 text-gray-300 hover:text-white cursor-pointer">
+
+          <a className="flex cursor-pointer items-center space-x-2 text-gray-300 hover:text-white">
             <Settings size={18} />
             <span>Settings</span>
           </a>
@@ -64,18 +81,17 @@ function DashboardLayout({ activeTab, setActiveTab, children }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8 overflow-y-auto">
-        {children}
-      </main>
+      <main className="flex-1 overflow-y-auto p-8">{children}</main>
     </div>
   );
 }
 
 // Projects Page Component
-function ProjectsPage({ setActiveTab }) {
+function ProjectsPage() {
   const [projects, setProjects] = useState([]);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
   const [projectForm, setProjectForm] = useState({
     id: null,
     title: "",
@@ -86,14 +102,18 @@ function ProjectsPage({ setActiveTab }) {
     featured: false,
     category: "wordpress",
   });
+
   const [showProjectForm, setShowProjectForm] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
       if (error || !user) {
         window.location.href = "/";
       } else {
@@ -101,17 +121,24 @@ function ProjectsPage({ setActiveTab }) {
         fetchProjects();
       }
     };
+
     checkUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchProjects = async () => {
     try {
-      const { data, error } = await supabase.from("projects").select("*");
+      // ✅ Newest projects first (last added appears first)
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .order("created_at", { ascending: false });
+
       if (error) {
         console.error("Fetch error:", error);
         setUploadError("Failed to fetch projects: " + error.message);
       } else {
-        setProjects(data);
+        setProjects(data || []);
       }
     } catch (err) {
       console.error("Unexpected error:", err);
@@ -127,12 +154,18 @@ function ProjectsPage({ setActiveTab }) {
 
     setUploadError("");
     setUploading(true);
+
     const uploadedUrls = [];
 
     try {
       for (let file of files) {
-        if (!file.type.startsWith('image/')) {
+        if (!file.type.startsWith("image/")) {
           setUploadError("Please upload only image files");
+          continue;
+        }
+
+        if (!user?.id) {
+          setUploadError("User not found. Please re-login.");
           continue;
         }
 
@@ -146,13 +179,11 @@ function ProjectsPage({ setActiveTab }) {
           continue;
         }
 
-        const { data: { publicUrl } } = supabase.storage
-          .from("images")
-          .getPublicUrl(fileName);
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("images").getPublicUrl(fileName);
 
-        if (publicUrl) {
-          uploadedUrls.push(publicUrl);
-        }
+        if (publicUrl) uploadedUrls.push(publicUrl);
       }
 
       if (uploadedUrls.length > 0) {
@@ -181,7 +212,10 @@ function ProjectsPage({ setActiveTab }) {
 
     try {
       const techArray = projectForm.technologies
-        ? projectForm.technologies.split(",").map((t) => t.trim()).filter(t => t !== "")
+        ? projectForm.technologies
+            .split(",")
+            .map((t) => t.trim())
+            .filter((t) => t !== "")
         : [];
 
       const payload = {
@@ -196,7 +230,10 @@ function ProjectsPage({ setActiveTab }) {
 
       let res;
       if (projectForm.id) {
-        res = await supabase.from("projects").update(payload).eq("id", projectForm.id);
+        res = await supabase
+          .from("projects")
+          .update(payload)
+          .eq("id", projectForm.id);
       } else {
         res = await supabase.from("projects").insert([payload]);
       }
@@ -214,6 +251,7 @@ function ProjectsPage({ setActiveTab }) {
           featured: false,
           category: "wordpress",
         });
+
         setShowProjectForm(false);
         fetchProjects();
       }
@@ -230,13 +268,16 @@ function ProjectsPage({ setActiveTab }) {
       technologies: Array.isArray(project.technologies)
         ? project.technologies.join(", ")
         : project.technologies || "",
-      images: Array.isArray(project.images) 
-        ? project.images 
-        : project.images ? [project.images] : [],
+      images: Array.isArray(project.images)
+        ? project.images
+        : project.images
+        ? [project.images]
+        : [],
       live_url: project.live_url || "",
-      featured: project.featured,
+      featured: !!project.featured,
       category: project.category || "wordpress",
     });
+
     setShowProjectForm(true);
   };
 
@@ -257,16 +298,17 @@ function ProjectsPage({ setActiveTab }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+      <div className="flex h-screen items-center justify-center bg-gray-900 text-white">
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-white" />
       </div>
     );
   }
 
   return (
     <>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold"> Projects</h2>
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-3xl font-bold">Projects</h2>
+
         <button
           onClick={() => {
             setProjectForm({
@@ -282,7 +324,7 @@ function ProjectsPage({ setActiveTab }) {
             setShowProjectForm(true);
             setUploadError("");
           }}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg flex items-center"
+          className="flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
         >
           <PlusCircle size={18} className="mr-2" />
           Add Project
@@ -290,26 +332,28 @@ function ProjectsPage({ setActiveTab }) {
       </div>
 
       {uploadError && (
-        <div className="bg-red-800 text-white p-3 rounded mb-4">
-          <div className="font-bold mb-1">Error:</div>
+        <div className="mb-4 rounded bg-red-800 p-3 text-white">
+          <div className="mb-1 font-bold">Error:</div>
           <div>{uploadError}</div>
         </div>
       )}
 
       {projects.length === 0 ? (
-        <div className="bg-gray-800 p-6 rounded-lg text-center">
-          <FolderKanban size={48} className="mx-auto text-gray-400 mb-4" />
-          <h3 className="text-xl font-semibold mb-2">No projects yet</h3>
-          <p className="text-gray-400 mb-4">Get started by adding your first project</p>
+        <div className="rounded-lg bg-gray-800 p-6 text-center">
+          <FolderKanban size={48} className="mx-auto mb-4 text-gray-400" />
+          <h3 className="mb-2 text-xl font-semibold">No projects yet</h3>
+          <p className="mb-4 text-gray-400">
+            Get started by adding your first project
+          </p>
           <button
             onClick={() => setShowProjectForm(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg"
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
           >
             Add Your First Project
           </button>
         </div>
       ) : (
-        <div className="overflow-x-auto bg-gray-800 rounded-lg shadow">
+        <div className="overflow-x-auto rounded-lg bg-gray-800 shadow">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-gray-700 text-gray-300">
@@ -321,6 +365,7 @@ function ProjectsPage({ setActiveTab }) {
                 <th className="p-3">Actions</th>
               </tr>
             </thead>
+
             <tbody>
               {projects.map((p) => (
                 <tr
@@ -332,35 +377,41 @@ function ProjectsPage({ setActiveTab }) {
                       <img
                         src={p.images[0]}
                         alt={p.title}
-                        className="w-16 h-16 object-cover rounded"
+                        className="h-16 w-16 rounded object-cover"
                         onError={(e) => {
-                          e.target.src = "https://via.placeholder.com/64?text=Error"
+                          e.currentTarget.src =
+                            "https://via.placeholder.com/64?text=Error";
                         }}
                       />
                     ) : (
-                      <div className="w-16 h-16 bg-gray-700 rounded flex items-center justify-center text-xs">
+                      <div className="flex h-16 w-16 items-center justify-center rounded bg-gray-700 text-xs">
                         No Image
                       </div>
                     )}
                   </td>
+
                   <td className="p-3">{p.title}</td>
                   <td className="p-3 capitalize">{p.category}</td>
+
                   <td className="p-3">
                     {Array.isArray(p.technologies)
                       ? p.technologies.join(", ")
                       : p.technologies}
                   </td>
+
                   <td className="p-3">{p.featured ? "Done" : "False"}</td>
-                  <td className="p-3 flex space-x-2">
+
+                  <td className="flex space-x-2 p-3">
                     <button
                       onClick={() => handleEditProject(p)}
-                      className="bg-yellow-500 hover:bg-yellow-600 px-3 py-1 rounded text-white"
+                      className="rounded bg-yellow-500 px-3 py-1 text-white hover:bg-yellow-600"
                     >
                       <Edit3 size={16} />
                     </button>
+
                     <button
                       onClick={() => handleDeleteProject(p.id)}
-                      className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-white"
+                      className="rounded bg-red-600 px-3 py-1 text-white hover:bg-red-700"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -373,15 +424,15 @@ function ProjectsPage({ setActiveTab }) {
       )}
 
       {showProjectForm && (
-        <div className="fixed inset-0 flex justify-end bg-black bg-opacity-50 z-50">
-          <div className="w-full max-w-md bg-gray-900 p-6 overflow-y-auto">
-            <h2 className="text-xl font-semibold mb-4">
+        <div className="fixed inset-0 z-50 flex justify-end bg-black bg-opacity-50">
+          <div className="w-full max-w-md overflow-y-auto bg-gray-900 p-6">
+            <h2 className="mb-4 text-xl font-semibold">
               {projectForm.id ? "✏️ Edit Project" : "➕ Add Project"}
             </h2>
 
             {uploadError && (
-              <div className="bg-red-800 text-white p-3 rounded mb-4">
-                <div className="font-bold mb-1">Error:</div>
+              <div className="mb-4 rounded bg-red-800 p-3 text-white">
+                <div className="mb-1 font-bold">Error:</div>
                 <div>{uploadError}</div>
               </div>
             )}
@@ -391,8 +442,10 @@ function ProjectsPage({ setActiveTab }) {
                 type="text"
                 placeholder="Title"
                 value={projectForm.title}
-                onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                onChange={(e) =>
+                  setProjectForm({ ...projectForm, title: e.target.value })
+                }
+                className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
                 required
               />
 
@@ -400,9 +453,12 @@ function ProjectsPage({ setActiveTab }) {
                 placeholder="Description"
                 value={projectForm.description}
                 onChange={(e) =>
-                  setProjectForm({ ...projectForm, description: e.target.value })
+                  setProjectForm({
+                    ...projectForm,
+                    description: e.target.value,
+                  })
                 }
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
                 rows={3}
               />
 
@@ -411,48 +467,56 @@ function ProjectsPage({ setActiveTab }) {
                 placeholder="Technologies (comma separated)"
                 value={projectForm.technologies}
                 onChange={(e) =>
-                  setProjectForm({ ...projectForm, technologies: e.target.value })
+                  setProjectForm({
+                    ...projectForm,
+                    technologies: e.target.value,
+                  })
                 }
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
               />
 
               <div>
-                <label className="block mb-2 text-sm">Upload Images</label>
+                <label className="mb-2 block text-sm">Upload Images</label>
                 <input
                   type="file"
                   multiple
                   accept="image/*"
                   onChange={handleFileUpload}
-                  className="w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 
-                             file:rounded-full file:border-0 file:text-sm 
-                             file:font-semibold file:bg-indigo-600 file:text-white 
-                             hover:file:bg-indigo-700"
+                  className="w-full text-sm text-gray-300 file:mr-4 file:rounded-full file:border-0 file:bg-indigo-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-indigo-700"
                   disabled={uploading}
                 />
-                <p className="text-xs text-gray-400 mt-1">
+
+                <p className="mt-1 text-xs text-gray-400">
                   You can select multiple images
                 </p>
-                {uploading && <p className="text-sm text-yellow-400 mt-1">Uploading images...</p>}
+
+                {uploading && (
+                  <p className="mt-1 text-sm text-yellow-400">
+                    Uploading images...
+                  </p>
+                )}
               </div>
 
               {projectForm.images.length > 0 && (
                 <div className="mt-3">
-                  <p className="text-sm mb-2">Image Previews:</p>
+                  <p className="mb-2 text-sm">Image Previews:</p>
+
                   <div className="flex flex-wrap gap-2">
                     {projectForm.images.map((img, i) => (
                       <div key={i} className="relative">
                         <img
                           src={img}
                           alt={`preview-${i}`}
-                          className="w-20 h-20 object-cover rounded-lg border border-gray-700"
+                          className="h-20 w-20 rounded-lg border border-gray-700 object-cover"
                           onError={(e) => {
-                            e.target.src = "https://via.placeholder.com/80?text=Error"
+                            e.currentTarget.src =
+                              "https://via.placeholder.com/80?text=Error";
                           }}
                         />
                         <button
                           type="button"
                           onClick={() => removeImage(i)}
-                          className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1"
+                          className="absolute -right-2 -top-2 rounded-full bg-red-600 p-1 text-white"
                         >
                           <Trash2 size={12} />
                         </button>
@@ -466,14 +530,18 @@ function ProjectsPage({ setActiveTab }) {
                 type="url"
                 placeholder="Live URL"
                 value={projectForm.live_url}
-                onChange={(e) => setProjectForm({ ...projectForm, live_url: e.target.value })}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                onChange={(e) =>
+                  setProjectForm({ ...projectForm, live_url: e.target.value })
+                }
+                className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
               />
 
               <select
                 value={projectForm.category}
-                onChange={(e) => setProjectForm({ ...projectForm, category: e.target.value })}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                onChange={(e) =>
+                  setProjectForm({ ...projectForm, category: e.target.value })
+                }
+                className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
               >
                 <option value="wordpress">Wordpress</option>
                 <option value="coding">Coding</option>
@@ -485,7 +553,10 @@ function ProjectsPage({ setActiveTab }) {
                   type="checkbox"
                   checked={projectForm.featured}
                   onChange={(e) =>
-                    setProjectForm({ ...projectForm, featured: e.target.checked })
+                    setProjectForm({
+                      ...projectForm,
+                      featured: e.target.checked,
+                    })
                   }
                 />
                 <span>Featured</span>
@@ -494,18 +565,19 @@ function ProjectsPage({ setActiveTab }) {
               <div className="flex space-x-3">
                 <button
                   type="submit"
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 py-2 rounded-lg text-white"
+                  className="flex-1 rounded-lg bg-indigo-600 py-2 text-white hover:bg-indigo-700"
                   disabled={uploading}
                 >
                   {projectForm.id ? "Update Project" : "Add Project"}
                 </button>
+
                 <button
                   type="button"
                   onClick={() => {
                     setShowProjectForm(false);
                     setUploadError("");
                   }}
-                  className="flex-1 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-white"
+                  className="flex-1 rounded-lg bg-gray-700 py-2 text-white hover:bg-gray-600"
                 >
                   Cancel
                 </button>
@@ -519,17 +591,19 @@ function ProjectsPage({ setActiveTab }) {
 }
 
 // Skills Page Component
-function SkillsPage({ setActiveTab }) {
+function SkillsPage() {
   const [skills, setSkills] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [skillForm, setSkillForm] = useState({
     id: null,
     title: "",
     category: "",
     skills: "",
     icon_name: "Code",
-    color: "primary"
+    color: "primary",
   });
+
   const [showSkillForm, setShowSkillForm] = useState(false);
   const [uploadError, setUploadError] = useState("");
 
@@ -538,37 +612,49 @@ function SkillsPage({ setActiveTab }) {
     { value: "Server", label: "Server", icon: <Server className="h-4 w-4" /> },
     { value: "Brain", label: "Brain", icon: <Brain className="h-4 w-4" /> },
     { value: "Wrench", label: "Wrench", icon: <Wrench className="h-4 w-4" /> },
-    { value: "Palette", label: "Palette", icon: <Palette className="h-4 w-4" /> },
-    { value: "Database", label: "Database", icon: <Database className="h-4 w-4" /> },
+    {
+      value: "Palette",
+      label: "Palette",
+      icon: <Palette className="h-4 w-4" />,
+    },
+    {
+      value: "Database",
+      label: "Database",
+      icon: <Database className="h-4 w-4" />,
+    },
   ];
 
-  const colorOptions = [
-    "primary",
-    "secondary",
-    "accent"
-  ];
+  const colorOptions = ["primary", "secondary", "accent"];
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
       if (error || !user) {
         window.location.href = "/";
       } else {
         fetchSkills();
       }
     };
+
     checkUser();
   }, []);
 
   const fetchSkills = async () => {
     try {
-      const { data, error } = await supabase.from("skills").select("*").order('title');
+      const { data, error } = await supabase
+        .from("skills")
+        .select("*")
+        .order("title");
+
       if (error) {
         console.error("Fetch skills error:", error);
         setUploadError("Failed to fetch skills: " + error.message);
       } else {
-        setSkills(data);
+        setSkills(data || []);
       }
     } catch (err) {
       console.error("Unexpected error:", err);
@@ -584,7 +670,10 @@ function SkillsPage({ setActiveTab }) {
 
     try {
       const skillsArray = skillForm.skills
-        ? skillForm.skills.split(",").map((s) => s.trim()).filter(s => s !== "")
+        ? skillForm.skills
+            .split(",")
+            .map((s) => s.trim())
+            .filter((s) => s !== "")
         : [];
 
       const payload = {
@@ -597,7 +686,10 @@ function SkillsPage({ setActiveTab }) {
 
       let res;
       if (skillForm.id) {
-        res = await supabase.from("skills").update(payload).eq("id", skillForm.id);
+        res = await supabase
+          .from("skills")
+          .update(payload)
+          .eq("id", skillForm.id);
       } else {
         res = await supabase.from("skills").insert([payload]);
       }
@@ -626,12 +718,13 @@ function SkillsPage({ setActiveTab }) {
       id: skill.id,
       title: skill.title,
       category: skill.category || "",
-      skills: Array.isArray(skill.skills) 
-        ? skill.skills.join(", ") 
+      skills: Array.isArray(skill.skills)
+        ? skill.skills.join(", ")
         : skill.skills || "",
       icon_name: skill.icon_name || "Code",
-      color: skill.color || "primary"
+      color: skill.color || "primary",
     });
+
     setShowSkillForm(true);
   };
 
@@ -651,29 +744,37 @@ function SkillsPage({ setActiveTab }) {
   };
 
   const renderIcon = (iconName) => {
-    switch(iconName) {
-      case "Code": return <Code className="h-5 w-5" />;
-      case "Server": return <Server className="h-5 w-5" />;
-      case "Brain": return <Brain className="h-5 w-5" />;
-      case "Wrench": return <Wrench className="h-5 w-5" />;
-      case "Palette": return <Palette className="h-5 w-5" />;
-      case "Database": return <Database className="h-5 w-5" />;
-      default: return <Code className="h-5 w-5" />;
+    switch (iconName) {
+      case "Code":
+        return <Code className="h-5 w-5" />;
+      case "Server":
+        return <Server className="h-5 w-5" />;
+      case "Brain":
+        return <Brain className="h-5 w-5" />;
+      case "Wrench":
+        return <Wrench className="h-5 w-5" />;
+      case "Palette":
+        return <Palette className="h-5 w-5" />;
+      case "Database":
+        return <Database className="h-5 w-5" />;
+      default:
+        return <Code className="h-5 w-5" />;
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+      <div className="flex h-screen items-center justify-center bg-gray-900 text-white">
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-white" />
       </div>
     );
   }
 
   return (
     <>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold"> Skills</h2>
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-3xl font-bold">Skills</h2>
+
         <button
           onClick={() => {
             setSkillForm({
@@ -682,12 +783,12 @@ function SkillsPage({ setActiveTab }) {
               category: "",
               skills: "",
               icon_name: "Code",
-              color: "primary"
+              color: "primary",
             });
             setShowSkillForm(true);
             setUploadError("");
           }}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg flex items-center"
+          className="flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
         >
           <PlusCircle size={18} className="mr-2" />
           Add Skill
@@ -695,26 +796,28 @@ function SkillsPage({ setActiveTab }) {
       </div>
 
       {uploadError && (
-        <div className="bg-red-800 text-white p-3 rounded mb-4">
-          <div className="font-bold mb-1">Error:</div>
+        <div className="mb-4 rounded bg-red-800 p-3 text-white">
+          <div className="mb-1 font-bold">Error:</div>
           <div>{uploadError}</div>
         </div>
       )}
 
       {skills.length === 0 ? (
-        <div className="bg-gray-800 p-6 rounded-lg text-center">
-          <Code size={48} className="mx-auto text-gray-400 mb-4" />
-          <h3 className="text-xl font-semibold mb-2">No skills yet</h3>
-          <p className="text-gray-400 mb-4">Get started by adding your first skill category</p>
+        <div className="rounded-lg bg-gray-800 p-6 text-center">
+          <Code size={48} className="mx-auto mb-4 text-gray-400" />
+          <h3 className="mb-2 text-xl font-semibold">No skills yet</h3>
+          <p className="mb-4 text-gray-400">
+            Get started by adding your first skill category
+          </p>
           <button
             onClick={() => setShowSkillForm(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg"
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
           >
             Add Your First Skill
           </button>
         </div>
       ) : (
-        <div className="overflow-x-auto bg-gray-800 rounded-lg shadow">
+        <div className="overflow-x-auto rounded-lg bg-gray-800 shadow">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-gray-700 text-gray-300">
@@ -726,6 +829,7 @@ function SkillsPage({ setActiveTab }) {
                 <th className="p-3">Actions</th>
               </tr>
             </thead>
+
             <tbody>
               {skills.map((s) => (
                 <tr
@@ -733,28 +837,31 @@ function SkillsPage({ setActiveTab }) {
                   className="border-b border-gray-700 hover:bg-gray-700"
                 >
                   <td className="p-3">
-                    <div className="p-2 rounded-full bg-primary/10 text-primary">
+                    <div className="rounded-full bg-primary/10 p-2 text-primary">
                       {renderIcon(s.icon_name)}
                     </div>
                   </td>
+
                   <td className="p-3">{s.title}</td>
                   <td className="p-3 capitalize">{s.category}</td>
+
                   <td className="p-3">
-                    {Array.isArray(s.skills)
-                      ? s.skills.join(", ")
-                      : s.skills}
+                    {Array.isArray(s.skills) ? s.skills.join(", ") : s.skills}
                   </td>
+
                   <td className="p-3 capitalize">{s.color}</td>
-                  <td className="p-3 flex space-x-2">
+
+                  <td className="flex space-x-2 p-3">
                     <button
                       onClick={() => handleEditSkill(s)}
-                      className="bg-yellow-500 hover:bg-yellow-600 px-3 py-1 rounded text-white"
+                      className="rounded bg-yellow-500 px-3 py-1 text-white hover:bg-yellow-600"
                     >
                       <Edit3 size={16} />
                     </button>
+
                     <button
                       onClick={() => handleDeleteSkill(s.id)}
-                      className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-white"
+                      className="rounded bg-red-600 px-3 py-1 text-white hover:bg-red-700"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -767,15 +874,15 @@ function SkillsPage({ setActiveTab }) {
       )}
 
       {showSkillForm && (
-        <div className="fixed inset-0 flex justify-end bg-black bg-opacity-50 z-50">
-          <div className="w-full max-w-md bg-gray-900 p-6 overflow-y-auto">
-            <h2 className="text-xl font-semibold mb-4">
+        <div className="fixed inset-0 z-50 flex justify-end bg-black bg-opacity-50">
+          <div className="w-full max-w-md overflow-y-auto bg-gray-900 p-6">
+            <h2 className="mb-4 text-xl font-semibold">
               {skillForm.id ? "✏️ Edit Skill" : "➕ Add Skill"}
             </h2>
 
             {uploadError && (
-              <div className="bg-red-800 text-white p-3 rounded mb-4">
-                <div className="font-bold mb-1">Error:</div>
+              <div className="mb-4 rounded bg-red-800 p-3 text-white">
+                <div className="mb-1 font-bold">Error:</div>
                 <div>{uploadError}</div>
               </div>
             )}
@@ -785,8 +892,10 @@ function SkillsPage({ setActiveTab }) {
                 type="text"
                 placeholder="Title"
                 value={skillForm.title}
-                onChange={(e) => setSkillForm({ ...skillForm, title: e.target.value })}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                onChange={(e) =>
+                  setSkillForm({ ...skillForm, title: e.target.value })
+                }
+                className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
                 required
               />
 
@@ -794,8 +903,10 @@ function SkillsPage({ setActiveTab }) {
                 type="text"
                 placeholder="Category (e.g., development, design, tools)"
                 value={skillForm.category}
-                onChange={(e) => setSkillForm({ ...skillForm, category: e.target.value })}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                onChange={(e) =>
+                  setSkillForm({ ...skillForm, category: e.target.value })
+                }
+                className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
                 required
               />
 
@@ -805,24 +916,26 @@ function SkillsPage({ setActiveTab }) {
                 onChange={(e) =>
                   setSkillForm({ ...skillForm, skills: e.target.value })
                 }
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
                 rows={3}
                 required
               />
 
               <div>
-                <label className="block mb-2 text-sm">Icon</label>
+                <label className="mb-2 block text-sm">Icon</label>
                 <div className="grid grid-cols-3 gap-2">
-                  {iconOptions.map(icon => (
+                  {iconOptions.map((icon) => (
                     <button
                       type="button"
                       key={icon.value}
-                      className={`flex items-center justify-center p-3 rounded-lg border ${
-                        skillForm.icon_name === icon.value 
-                          ? 'border-indigo-500 bg-indigo-500/10' 
-                          : 'border-gray-700 hover:border-gray-600'
+                      className={`flex items-center justify-center rounded-lg border p-3 ${
+                        skillForm.icon_name === icon.value
+                          ? "border-indigo-500 bg-indigo-500/10"
+                          : "border-gray-700 hover:border-gray-600"
                       }`}
-                      onClick={() => setSkillForm({ ...skillForm, icon_name: icon.value })}
+                      onClick={() =>
+                        setSkillForm({ ...skillForm, icon_name: icon.value })
+                      }
                     >
                       {icon.icon}
                       <span className="ml-2 text-sm">{icon.label}</span>
@@ -832,20 +945,22 @@ function SkillsPage({ setActiveTab }) {
               </div>
 
               <div>
-                <label className="block mb-2 text-sm">Color</label>
+                <label className="mb-2 block text-sm">Color</label>
                 <div className="flex gap-2">
-                  {colorOptions.map(color => (
+                  {colorOptions.map((color) => (
                     <button
                       type="button"
                       key={color}
-                      className={`flex-1 py-2 rounded-lg text-sm font-medium ${
-                        skillForm.color === color 
-                          ? 'ring-2 ring-offset-2 ring-offset-gray-900 ring-indigo-500' 
-                          : ''
+                      className={`flex-1 rounded-lg py-2 text-sm font-medium ${
+                        skillForm.color === color
+                          ? "ring-2 ring-indigo-500 ring-offset-2 ring-offset-gray-900"
+                          : ""
                       } ${
-                        color === 'primary' ? 'bg-primary/20 text-primary' :
-                        color === 'secondary' ? 'bg-secondary/20 text-secondary' :
-                        'bg-accent/20 text-accent'
+                        color === "primary"
+                          ? "bg-primary/20 text-primary"
+                          : color === "secondary"
+                          ? "bg-secondary/20 text-secondary"
+                          : "bg-accent/20 text-accent"
                       }`}
                       onClick={() => setSkillForm({ ...skillForm, color })}
                     >
@@ -858,17 +973,18 @@ function SkillsPage({ setActiveTab }) {
               <div className="flex space-x-3">
                 <button
                   type="submit"
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 py-2 rounded-lg text-white"
+                  className="flex-1 rounded-lg bg-indigo-600 py-2 text-white hover:bg-indigo-700"
                 >
                   {skillForm.id ? "Update Skill" : "Add Skill"}
                 </button>
+
                 <button
                   type="button"
                   onClick={() => {
                     setShowSkillForm(false);
                     setUploadError("");
                   }}
-                  className="flex-1 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-white"
+                  className="flex-1 rounded-lg bg-gray-700 py-2 text-white hover:bg-gray-600"
                 >
                   Cancel
                 </button>
@@ -882,9 +998,10 @@ function SkillsPage({ setActiveTab }) {
 }
 
 // Experiences Page Component
-function ExperiencesPage({ setActiveTab }) {
+function ExperiencesPage() {
   const [experiences, setExperiences] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [experienceForm, setExperienceForm] = useState({
     id: null,
     title: "",
@@ -894,8 +1011,9 @@ function ExperiencesPage({ setActiveTab }) {
     type: "",
     description: "",
     technologies: "",
-    link: ""
+    link: "",
   });
+
   const [showExperienceForm, setShowExperienceForm] = useState(false);
   const [uploadError, setUploadError] = useState("");
 
@@ -905,30 +1023,38 @@ function ExperiencesPage({ setActiveTab }) {
     "Contract",
     "Freelance",
     "Internship",
-    "Volunteer"
+    "Volunteer",
   ];
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
       if (error || !user) {
         window.location.href = "/";
       } else {
         fetchExperiences();
       }
     };
+
     checkUser();
   }, []);
 
   const fetchExperiences = async () => {
     try {
-      const { data, error } = await supabase.from("experiences").select("*").order('period', { ascending: false });
+      const { data, error } = await supabase
+        .from("experiences")
+        .select("*")
+        .order("period", { ascending: false });
+
       if (error) {
         console.error("Fetch experiences error:", error);
         setUploadError("Failed to fetch experiences: " + error.message);
       } else {
-        setExperiences(data);
+        setExperiences(data || []);
       }
     } catch (err) {
       console.error("Unexpected error:", err);
@@ -944,7 +1070,10 @@ function ExperiencesPage({ setActiveTab }) {
 
     try {
       const techArray = experienceForm.technologies
-        ? experienceForm.technologies.split(",").map((t) => t.trim()).filter(t => t !== "")
+        ? experienceForm.technologies
+            .split(",")
+            .map((t) => t.trim())
+            .filter((t) => t !== "")
         : [];
 
       const payload = {
@@ -960,7 +1089,10 @@ function ExperiencesPage({ setActiveTab }) {
 
       let res;
       if (experienceForm.id) {
-        res = await supabase.from("experiences").update(payload).eq("id", experienceForm.id);
+        res = await supabase
+          .from("experiences")
+          .update(payload)
+          .eq("id", experienceForm.id);
       } else {
         res = await supabase.from("experiences").insert([payload]);
       }
@@ -977,8 +1109,9 @@ function ExperiencesPage({ setActiveTab }) {
           type: "",
           description: "",
           technologies: "",
-          link: ""
+          link: "",
         });
+
         setShowExperienceForm(false);
         fetchExperiences();
       }
@@ -996,18 +1129,23 @@ function ExperiencesPage({ setActiveTab }) {
       location: experience.location,
       type: experience.type,
       description: experience.description,
-      technologies: Array.isArray(experience.technologies) 
-        ? experience.technologies.join(", ") 
+      technologies: Array.isArray(experience.technologies)
+        ? experience.technologies.join(", ")
         : experience.technologies || "",
-      link: experience.link || ""
+      link: experience.link || "",
     });
+
     setShowExperienceForm(true);
   };
 
   const handleDeleteExperience = async (id) => {
     if (window.confirm("Are you sure you want to delete this experience?")) {
       try {
-        const { error } = await supabase.from("experiences").delete().eq("id", id);
+        const { error } = await supabase
+          .from("experiences")
+          .delete()
+          .eq("id", id);
+
         if (error) {
           setUploadError("Failed to delete experience: " + error.message);
         } else {
@@ -1021,16 +1159,17 @@ function ExperiencesPage({ setActiveTab }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+      <div className="flex h-screen items-center justify-center bg-gray-900 text-white">
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-white" />
       </div>
     );
   }
 
   return (
     <>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold"> Experiences</h2>
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-3xl font-bold">Experiences</h2>
+
         <button
           onClick={() => {
             setExperienceForm({
@@ -1042,12 +1181,12 @@ function ExperiencesPage({ setActiveTab }) {
               type: "",
               description: "",
               technologies: "",
-              link: ""
+              link: "",
             });
             setShowExperienceForm(true);
             setUploadError("");
           }}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg flex items-center"
+          className="flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
         >
           <PlusCircle size={18} className="mr-2" />
           Add Experience
@@ -1055,26 +1194,28 @@ function ExperiencesPage({ setActiveTab }) {
       </div>
 
       {uploadError && (
-        <div className="bg-red-800 text-white p-3 rounded mb-4">
-          <div className="font-bold mb-1">Error:</div>
+        <div className="mb-4 rounded bg-red-800 p-3 text-white">
+          <div className="mb-1 font-bold">Error:</div>
           <div>{uploadError}</div>
         </div>
       )}
 
       {experiences.length === 0 ? (
-        <div className="bg-gray-800 p-6 rounded-lg text-center">
-          <Briefcase size={48} className="mx-auto text-gray-400 mb-4" />
-          <h3 className="text-xl font-semibold mb-2">No experiences yet</h3>
-          <p className="text-gray-400 mb-4">Get started by adding your first experience</p>
+        <div className="rounded-lg bg-gray-800 p-6 text-center">
+          <Briefcase size={48} className="mx-auto mb-4 text-gray-400" />
+          <h3 className="mb-2 text-xl font-semibold">No experiences yet</h3>
+          <p className="mb-4 text-gray-400">
+            Get started by adding your first experience
+          </p>
           <button
             onClick={() => setShowExperienceForm(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg"
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
           >
             Add Your First Experience
           </button>
         </div>
       ) : (
-        <div className="overflow-x-auto bg-gray-800 rounded-lg shadow">
+        <div className="overflow-x-auto rounded-lg bg-gray-800 shadow">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-gray-700 text-gray-300">
@@ -1086,11 +1227,12 @@ function ExperiencesPage({ setActiveTab }) {
                 <th className="p-3">Actions</th>
               </tr>
             </thead>
+
             <tbody>
               {experiences.map((exp) => (
                 <tr
                   key={exp.id}
-                  className="border-b border-gray-700 hover:bg-gray-700"
+                  className="border-b border-gray-700 align-top hover:bg-gray-700"
                 >
                   <td className="p-3 font-semibold">{exp.title}</td>
                   <td className="p-3">{exp.company}</td>
@@ -1101,16 +1243,16 @@ function ExperiencesPage({ setActiveTab }) {
                       ? exp.technologies.join(", ")
                       : exp.technologies}
                   </td>
-                  <td className="p-3 flex space-x-2">
+                  <td className="flex space-x-2 p-3">
                     <button
                       onClick={() => handleEditExperience(exp)}
-                      className="bg-yellow-500 hover:bg-yellow-600 px-3 py-1 rounded text-white"
+                      className="rounded bg-yellow-500 px-3 py-1 text-white hover:bg-yellow-600"
                     >
                       <Edit3 size={16} />
                     </button>
                     <button
                       onClick={() => handleDeleteExperience(exp.id)}
-                      className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-white"
+                      className="rounded bg-red-600 px-3 py-1 text-white hover:bg-red-700"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -1123,15 +1265,15 @@ function ExperiencesPage({ setActiveTab }) {
       )}
 
       {showExperienceForm && (
-        <div className="fixed inset-0 flex justify-end bg-black bg-opacity-50 z-50">
-          <div className="w-full max-w-md bg-gray-900 p-6 overflow-y-auto">
-            <h2 className="text-xl font-semibold mb-4">
+        <div className="fixed inset-0 z-50 flex justify-end bg-black bg-opacity-50">
+          <div className="w-full max-w-md overflow-y-auto bg-gray-900 p-6">
+            <h2 className="mb-4 text-xl font-semibold">
               {experienceForm.id ? "✏️ Edit Experience" : "➕ Add Experience"}
             </h2>
 
             {uploadError && (
-              <div className="bg-red-800 text-white p-3 rounded mb-4">
-                <div className="font-bold mb-1">Error:</div>
+              <div className="mb-4 rounded bg-red-800 p-3 text-white">
+                <div className="mb-1 font-bold">Error:</div>
                 <div>{uploadError}</div>
               </div>
             )}
@@ -1141,8 +1283,10 @@ function ExperiencesPage({ setActiveTab }) {
                 type="text"
                 placeholder="Title (e.g., Web Developer)"
                 value={experienceForm.title}
-                onChange={(e) => setExperienceForm({ ...experienceForm, title: e.target.value })}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                onChange={(e) =>
+                  setExperienceForm({ ...experienceForm, title: e.target.value })
+                }
+                className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
                 required
               />
 
@@ -1150,8 +1294,13 @@ function ExperiencesPage({ setActiveTab }) {
                 type="text"
                 placeholder="Company"
                 value={experienceForm.company}
-                onChange={(e) => setExperienceForm({ ...experienceForm, company: e.target.value })}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                onChange={(e) =>
+                  setExperienceForm({
+                    ...experienceForm,
+                    company: e.target.value,
+                  })
+                }
+                className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
                 required
               />
 
@@ -1159,8 +1308,13 @@ function ExperiencesPage({ setActiveTab }) {
                 type="text"
                 placeholder="Period (e.g., 4/2025 - Present)"
                 value={experienceForm.period}
-                onChange={(e) => setExperienceForm({ ...experienceForm, period: e.target.value })}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                onChange={(e) =>
+                  setExperienceForm({
+                    ...experienceForm,
+                    period: e.target.value,
+                  })
+                }
+                className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
                 required
               />
 
@@ -1168,20 +1322,29 @@ function ExperiencesPage({ setActiveTab }) {
                 type="text"
                 placeholder="Location (e.g., On-site, Remote)"
                 value={experienceForm.location}
-                onChange={(e) => setExperienceForm({ ...experienceForm, location: e.target.value })}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                onChange={(e) =>
+                  setExperienceForm({
+                    ...experienceForm,
+                    location: e.target.value,
+                  })
+                }
+                className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
                 required
               />
 
               <select
                 value={experienceForm.type}
-                onChange={(e) => setExperienceForm({ ...experienceForm, type: e.target.value })}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                onChange={(e) =>
+                  setExperienceForm({ ...experienceForm, type: e.target.value })
+                }
+                className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
                 required
               >
                 <option value="">Select Type</option>
-                {experienceTypeOptions.map(type => (
-                  <option key={type} value={type}>{type}</option>
+                {experienceTypeOptions.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
                 ))}
               </select>
 
@@ -1189,9 +1352,12 @@ function ExperiencesPage({ setActiveTab }) {
                 placeholder="Description"
                 value={experienceForm.description}
                 onChange={(e) =>
-                  setExperienceForm({ ...experienceForm, description: e.target.value })
+                  setExperienceForm({
+                    ...experienceForm,
+                    description: e.target.value,
+                  })
                 }
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
                 rows={3}
                 required
               />
@@ -1201,33 +1367,39 @@ function ExperiencesPage({ setActiveTab }) {
                 placeholder="Technologies (comma separated)"
                 value={experienceForm.technologies}
                 onChange={(e) =>
-                  setExperienceForm({ ...experienceForm, technologies: e.target.value })
+                  setExperienceForm({
+                    ...experienceForm,
+                    technologies: e.target.value,
+                  })
                 }
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
               />
 
               <input
                 type="url"
                 placeholder="Company URL (optional)"
                 value={experienceForm.link}
-                onChange={(e) => setExperienceForm({ ...experienceForm, link: e.target.value })}
-                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                onChange={(e) =>
+                  setExperienceForm({ ...experienceForm, link: e.target.value })
+                }
+                className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
               />
 
               <div className="flex space-x-3">
                 <button
                   type="submit"
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 py-2 rounded-lg text-white"
+                  className="flex-1 rounded-lg bg-indigo-600 py-2 text-white hover:bg-indigo-700"
                 >
                   {experienceForm.id ? "Update Experience" : "Add Experience"}
                 </button>
+
                 <button
                   type="button"
                   onClick={() => {
                     setShowExperienceForm(false);
                     setUploadError("");
                   }}
-                  className="flex-1 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-white"
+                  className="flex-1 rounded-lg bg-gray-700 py-2 text-white hover:bg-gray-600"
                 >
                   Cancel
                 </button>
@@ -1240,25 +1412,12 @@ function ExperiencesPage({ setActiveTab }) {
   );
 }
 
-// Main Dashboard Component
-export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState("projects");
-
-  return (
-    <DashboardLayout activeTab={activeTab} setActiveTab={setActiveTab}>
-      {activeTab === "projects" && <ProjectsPage setActiveTab={setActiveTab} />}
-      {activeTab === "skills" && <SkillsPage setActiveTab={setActiveTab} />}
-      {activeTab === "contacts" && <ContactsPage setActiveTab={setActiveTab} />}
-      {activeTab === "experiences" && <ExperiencesPage setActiveTab={setActiveTab} />}
-    </DashboardLayout>
-  );
-}
-
 // Contacts Page Component
 function ContactsPage() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
   useEffect(() => {
     let channel;
 
@@ -1285,55 +1444,59 @@ function ContactsPage() {
 
     fetchMessages();
 
-    // subscribe to realtime inserts so dashboard updates when new messages arrive
+    // Realtime updates
     try {
       channel = supabase
-        .channel('public:contact_messages')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'contact_messages' }, (payload) => {
-          const newRow = payload.new;
-          setMessages((prev) => [newRow, ...prev]);
-        })
+        .channel("public:contact_messages")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "contact_messages" },
+          (payload) => {
+            const newRow = payload.new;
+            setMessages((prev) => [newRow, ...prev]);
+          }
+        )
         .subscribe();
     } catch (subErr) {
-      console.warn('Realtime subscription could not be created:', subErr);
+      console.warn("Realtime subscription could not be created:", subErr);
     }
 
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
+      if (channel) supabase.removeChannel(channel);
     };
   }, []);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+      <div className="flex h-screen items-center justify-center bg-gray-900 text-white">
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-white" />
       </div>
     );
   }
 
   return (
     <>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold"> Contact Messages</h2>
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-3xl font-bold">Contact Messages</h2>
       </div>
 
       {error && (
-        <div className="bg-red-800 text-white p-3 rounded mb-4">
-          <div className="font-bold mb-1">Error:</div>
+        <div className="mb-4 rounded bg-red-800 p-3 text-white">
+          <div className="mb-1 font-bold">Error:</div>
           <div>{error}</div>
         </div>
       )}
 
       {messages.length === 0 ? (
-        <div className="bg-gray-800 p-6 rounded-lg text-center">
-          <Mail size={48} className="mx-auto text-gray-400 mb-4" />
-          <h3 className="text-xl font-semibold mb-2">No messages yet</h3>
-          <p className="text-gray-400 mb-4">Messages sent via the contact form will appear here.</p>
+        <div className="rounded-lg bg-gray-800 p-6 text-center">
+          <Mail size={48} className="mx-auto mb-4 text-gray-400" />
+          <h3 className="mb-2 text-xl font-semibold">No messages yet</h3>
+          <p className="mb-4 text-gray-400">
+            Messages sent via the contact form will appear here.
+          </p>
         </div>
       ) : (
-        <div className="overflow-x-auto bg-gray-800 rounded-lg shadow">
+        <div className="overflow-x-auto rounded-lg bg-gray-800 shadow">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-gray-700 text-gray-300">
@@ -1344,14 +1507,24 @@ function ContactsPage() {
                 <th className="p-3">Received</th>
               </tr>
             </thead>
+
             <tbody>
               {messages.map((m) => (
-                <tr key={m.id} className="border-b border-gray-700 hover:bg-gray-700 align-top">
+                <tr
+                  key={m.id}
+                  className="border-b border-gray-700 align-top hover:bg-gray-700"
+                >
                   <td className="p-3 align-top">{m.name}</td>
                   <td className="p-3 align-top">{m.email}</td>
                   <td className="p-3 align-top">{m.subject}</td>
-                  <td className="p-3 align-top max-w-xl whitespace-pre-wrap">{m.message}</td>
-                  <td className="p-3 align-top">{m.created_at ? new Date(m.created_at).toLocaleString() : "-"}</td>
+                  <td className="max-w-xl whitespace-pre-wrap p-3 align-top">
+                    {m.message}
+                  </td>
+                  <td className="p-3 align-top">
+                    {m.created_at
+                      ? new Date(m.created_at).toLocaleString()
+                      : "-"}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -1359,5 +1532,19 @@ function ContactsPage() {
         </div>
       )}
     </>
+  );
+}
+
+// Main Dashboard Component
+export default function Dashboard() {
+  const [activeTab, setActiveTab] = useState("projects");
+
+  return (
+    <DashboardLayout activeTab={activeTab} setActiveTab={setActiveTab}>
+      {activeTab === "projects" && <ProjectsPage />}
+      {activeTab === "skills" && <SkillsPage />}
+      {activeTab === "contacts" && <ContactsPage />}
+      {activeTab === "experiences" && <ExperiencesPage />}
+    </DashboardLayout>
   );
 }
