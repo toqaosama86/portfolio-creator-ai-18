@@ -1,11 +1,23 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Image as ImageIcon, Eye } from "lucide-react";
-import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselPrevious,
+  CarouselNext,
+} from "@/components/ui/carousel";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface Project {
@@ -16,22 +28,21 @@ interface Project {
   images: string[];
   live_url?: string;
   featured: boolean;
-  category: "wordpress" | "coding" | "design" | "Freelance" ;
+  category: "wordpress" | "coding" | "design" | "Freelance";
+  created_at?: string; // optional (in case TS complains)
 }
 
 const Projects = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const [wordpressExpanded, setWordpressExpanded] = useState(false);
-  const [codingExpanded, setCodingExpanded] = useState(false);
-  const [designExpanded, setDesignExpanded] = useState(false);
 
   useEffect(() => {
     const fetchProjects = async () => {
       const { data, error } = await supabase
         .from<Project>("projects")
         .select("*")
-        .order("title", { ascending: true });
+        // ✅ newest first (last added shows first)
+        .order("created_at", { ascending: false });
 
       if (error) console.error("Error fetching projects:", error);
       else setProjects(data || []);
@@ -42,7 +53,8 @@ const Projects = () => {
     fetchProjects();
   }, []);
 
-  const getImages = (project: Project) => (project.images.length ? project.images : ["/placeholder.svg"]);
+  const getImages = (project: Project) =>
+    project.images?.length ? project.images : ["/placeholder.svg"];
 
   const wordpressProjects = projects.filter((p) => p.category === "wordpress");
   const codingProjects = projects.filter((p) => p.category === "coding");
@@ -56,14 +68,17 @@ const Projects = () => {
         <img
           src={getImages(project)[0]}
           alt={project.title}
-          className="w-full h-60 object-cover group-hover:scale-105 transition-transform duration-300"
+          className="h-60 w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
       </div>
+
       <CardHeader>
         <CardTitle>{project.title}</CardTitle>
       </CardHeader>
-      <CardContent>
+
+      <CardContent className="space-y-3">
         <p>{project.description}</p>
+
         <div className="flex flex-wrap gap-2">
           {project.technologies.map((tech) => (
             <Badge key={tech} variant="secondary">
@@ -71,11 +86,12 @@ const Projects = () => {
             </Badge>
           ))}
         </div>
-        <div className="flex gap-3 pt-2 items-center">
+
+        <div className="flex items-center gap-3 pt-2">
           {project.live_url && (
             <Button size="sm" asChild>
               <a href={project.live_url} target="_blank" rel="noopener noreferrer">
-                <Eye className="h-4 w-4 mr-2" />
+                <Eye className="mr-2 h-4 w-4" />
                 Live Demo
               </a>
             </Button>
@@ -84,18 +100,24 @@ const Projects = () => {
           <Dialog>
             <DialogTrigger asChild>
               <Button size="sm" variant="ghost" className="flex items-center">
-                <ImageIcon className="h-4 w-4 mr-2" />
+                <ImageIcon className="mr-2 h-4 w-4" />
                 Show Media
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl w-full">
+
+            <DialogContent className="w-full max-w-3xl">
               <DialogTitle>{project.title} — Media</DialogTitle>
               <DialogDescription>Browse images for this project.</DialogDescription>
+
               <Carousel>
                 <CarouselContent className="items-stretch">
                   {getImages(project).map((img, i) => (
                     <CarouselItem key={i} className="flex justify-center">
-                      <img src={img} alt={`${project.title} ${i + 1}`} className="max-h-[60vh] object-contain" />
+                      <img
+                        src={img}
+                        alt={`${project.title} ${i + 1}`}
+                        className="max-h-[60vh] object-contain"
+                      />
                     </CarouselItem>
                   ))}
                 </CarouselContent>
@@ -112,55 +134,38 @@ const Projects = () => {
   return (
     <section id="projects" className="py-20">
       <div className="container mx-auto px-4">
-        <h2 className="text-4xl font-bold text-center mb-12 gradient-text">All Projects</h2>
+        <h2 className="mb-12 text-center text-4xl font-bold gradient-text">
+          All Projects
+        </h2>
 
-        <Tabs defaultValue="wordpress">
-          <TabsList className="justify-center mb-6">
-            <TabsTrigger value="wordpress">Wordpress</TabsTrigger>
+        {/* ✅ default tab is Coding */}
+        <Tabs defaultValue="coding">
+          <TabsList className="mb-6 justify-center">
+            {/* ✅ Coding first */}
             <TabsTrigger value="coding">Coding</TabsTrigger>
+            <TabsTrigger value="wordpress">Wordpress</TabsTrigger>
             <TabsTrigger value="design">Design</TabsTrigger>
           </TabsList>
 
-          {/* Wordpress Tab */}
-          <TabsContent value="wordpress">
-            <div className="grid lg:grid-cols-3 gap-8 mb-6">
-              {(wordpressExpanded ? wordpressProjects : wordpressProjects.slice(0, 3)).map(renderProjectCard)}
-            </div>
-            {wordpressProjects.length > 3 && (
-              <div className="flex justify-center">
-                <Button size="sm" variant="ghost" onClick={() => setWordpressExpanded((v) => !v)}>
-                  {wordpressExpanded ? "Show less" : `Show more (${wordpressProjects.length - 3})`}
-                </Button>
-              </div>
-            )}
-          </TabsContent>
-
-          {/* Coding Tab */}
+          {/* ✅ Coding Tab - show all (no show more) */}
           <TabsContent value="coding">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-              {(codingExpanded ? codingProjects : codingProjects.slice(0, 4)).map(renderProjectCard)}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {codingProjects.map(renderProjectCard)}
             </div>
-            {codingProjects.length > 4 && (
-              <div className="flex justify-center">
-                <Button size="sm" variant="ghost" onClick={() => setCodingExpanded((v) => !v)}>
-                  {codingExpanded ? "Show less" : `Show more (${codingProjects.length - 4})`}
-                </Button>
-              </div>
-            )}
           </TabsContent>
 
-          {/* Design Tab */}
-          <TabsContent value="design">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-              {(designExpanded ? designProjects : designProjects.slice(0, 4)).map(renderProjectCard)}
+          {/* ✅ Wordpress Tab - show all (no show more) */}
+          <TabsContent value="wordpress">
+            <div className="grid gap-8 lg:grid-cols-3">
+              {wordpressProjects.map(renderProjectCard)}
             </div>
-            {designProjects.length > 4 && (
-              <div className="flex justify-center">
-                <Button size="sm" variant="ghost" onClick={() => setDesignExpanded((v) => !v)}>
-                  {designExpanded ? "Show less" : `Show more (${designProjects.length - 4})`}
-                </Button>
-              </div>
-            )}
+          </TabsContent>
+
+          {/* ✅ Design Tab - show all (no show more) */}
+          <TabsContent value="design">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {designProjects.map(renderProjectCard)}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
