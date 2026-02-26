@@ -55,9 +55,8 @@ const Projects = () => {
 
   const getImages = (project: Project) =>
     project.images?.length ? project.images : ["/placeholder.svg"];
-
-  const wordpressProjects = projects.filter((p) => p.category === "wordpress");
   const codingProjects = projects.filter((p) => p.category === "coding");
+  const wordpressProjects = projects.filter((p) => p.category === "wordpress");
   const designProjects = projects.filter((p) => p.category === "design");
 
   if (loading) return <p className="text-center">Loading projects...</p>;
