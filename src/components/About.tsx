@@ -19,14 +19,13 @@ const About = () => {
                     Professional Summary
                   </h3>
                   <p className="text-lg text-muted-foreground leading-relaxed">
-Front-End Software Engineer with 1+ year of hands-on experience building production-ready, scalable, and
-responsive applications using React.js, JavaScript, and modern UI patterns. Delivered multiple deployed
-freelance projects, integrated REST APIs, implemented reusable components, and optimized performance.
-Strong foundation in Computer Science, UI/UX, and system design. Experience integrating ERP systems
-(Edra ERP) into web applications, mapping workflows, and building data-driven UIs. Growing expertise in
-TypeScript, Next.js, Angular, testing , and performance optimization.
-Passionate about building intuitive interfaces and contributing to high-impact global engineering teams.
-                  </p>
+React Frontend Engineer with 1+ year of experience building scalable, performance-optimized web
+applications using React and TypeScript.
+Experienced in component architecture, REST API integration, async state handling, and mobile-first UI
+systems.
+Delivered measurable performance improvements (30% render reduction, 40% mobile optimization) across
+production applications. Strong understanding of frontend architecture, data flow patterns, and clean code
+principles.  </p>
                 </div>
 
                 {/* Quick Links */}
@@ -64,7 +63,7 @@ Passionate about building intuitive interfaces and contributing to high-impact g
 
                   <div>
                     <h4 className="font-semibold text-primary mb-2">Experience</h4>
-                    <p className="text-muted-foreground">1+ Years</p>
+                    <p className="text-muted-foreground">1++ Years</p>
                   </div>
                 </div>
               </div>
