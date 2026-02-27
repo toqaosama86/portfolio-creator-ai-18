@@ -19,7 +19,7 @@ const About = () => {
                     Professional Summary
                   </h3>
                   <p className="text-lg text-muted-foreground leading-relaxed">
-React Frontend Engineer with 1+ year of experience building scalable, performance-optimized web
+React Frontend Engineer with 1++ year of experience building scalable, performance-optimized web
 applications using React and TypeScript.
 Experienced in component architecture, REST API integration, async state handling, and mobile-first UI
 systems.
