@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Github, Linkedin, ExternalLink } from "lucide-react";
+import { Github, Linkedin, ExternalLink ,MessageCircle } from "lucide-react";
 
 const About = () => {
   return (
@@ -55,6 +55,16 @@ principles.  </p>
                     <span className="group-hover:text-primary transition-colors">LinkedIn</span>
                     <ExternalLink className="h-4 w-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                   </a>
+                  <a 
+                   href="https://wa.me/201155388410" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 rounded-lg bg-card hover:bg-primary/10 transition-colors group"
+                  >
+                <MessageCircle size={20} className="h-5 w-5 text-primary" />
+                <span className="group-hover:text-primary transition-colors">Wattsapp</span>
+                <ExternalLink className="h-4 w-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                </a>
 
                   <div className="pt-4">
                     <h4 className="font-semibold text-primary mb-2">Location</h4>
