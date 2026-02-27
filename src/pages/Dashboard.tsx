@@ -37,7 +37,7 @@ const normalizeCategory = (v: any) => {
   if (c === "wordpress") return "wordpress";
   if (c === "coding") return "coding";
   if (c === "design") return "design";
-  if (c === "freelance") return "freelance";
+  if (c === "shopify") return "shopify";
   return "coding"; // default
 };
 
@@ -593,7 +593,7 @@ function ProjectsPage() {
                 <option value="wordpress">Wordpress</option>
                 <option value="coding">Coding</option>
                 <option value="design">Design</option>
-                <option value="freelance">Freelance</option>
+                <option value="shopify">Shopify</option>
               </select>
 
               <label className="flex items-center space-x-2">
@@ -1590,8 +1590,8 @@ export function ProjectsSectionFrontend() {
     () => projects.filter((p) => normalizeCategory(p.category) === "design"),
     [projects]
   );
-  const freelanceProjects = useMemo(
-    () => projects.filter((p) => normalizeCategory(p.category) === "freelance"),
+  const shopifyProjects = useMemo(
+    () => projects.filter((p) => normalizeCategory(p.category) === "shopify"),
     [projects]
   );
 
@@ -1667,8 +1667,8 @@ export function ProjectsSectionFrontend() {
           <a href="#coding" className="rounded-lg bg-white/10 px-4 py-2">Coding</a>
           <a href="#wordpress" className="rounded-lg bg-white/10 px-4 py-2">Wordpress</a>
           <a href="#design" className="rounded-lg bg-white/10 px-4 py-2">Design</a>
-          {freelanceProjects.length > 0 && (
-            <a href="#freelance" className="rounded-lg bg-white/10 px-4 py-2">Freelance</a>
+          {shopifyProjects.length > 0 && (
+            <a href="#shopify" className="rounded-lg bg-white/10 px-4 py-2">Shopify</a>
           )}
         </div>
 
@@ -1687,11 +1687,11 @@ export function ProjectsSectionFrontend() {
           {designProjects.map((p) => <ProjectCard key={p.id} project={p} />)}
         </div>
 
-        {freelanceProjects.length > 0 && (
+        {shopifyProjects.length > 0 && (
           <>
-            <h3 id="freelance" className="mt-10 mb-4 text-2xl font-semibold">Freelance</h3>
+            <h3 id="shopify" className="mt-10 mb-4 text-2xl font-semibold">Shopify</h3>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {freelanceProjects.map((p) => <ProjectCard key={p.id} project={p} />)}
+              {shopifyProjects.map((p) => <ProjectCard key={p.id} project={p} />)}
             </div>
           </>
         )}
