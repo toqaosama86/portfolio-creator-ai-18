@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Download, Mail, Github, Linkedin } from "lucide-react";
+import { Download, Mail, Github, Linkedin, ArrowDown } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const Hero = () => {
@@ -87,9 +87,19 @@ const Hero = () => {
       </div>
 
       {/* Scroll Indicator */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+      <div
+        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center animate-bounce cursor-pointer"
+        onClick={() => scrollToSection('#about')}
+        aria-label="Scroll to next section"
+        style={{marginLeft:'-40px'}}
+      >
         <div className="w-6 h-10 border-2 border-muted-foreground rounded-full flex justify-center">
           <div className="w-1 h-3 bg-primary rounded-full mt-2 animate-pulse" />
+        </div>
+        {/* add text and arrow to make it more obvious */}
+        <div className="mt-2 text-sm text-muted-foreground flex items-center gap-1 animate-pulse">
+          <ArrowDown className="h-4 w-4" />
+          <span>Scroll down</span>
         </div>
       </div>
     </section>
