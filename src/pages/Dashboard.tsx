@@ -1,4 +1,11 @@
-import { useState, useEffect } from "react";
+// ✅ FULL UPDATED CODE (Dashboard + Projects UI + Front Projects Tabs)
+// - Prevents crashes when technologies/images/category are null
+// - Shows ALL projects in each tab (no "Show more")
+// - Adds safe sorting even if created_at missing
+// - Makes Dashboard Projects table + form safer (images/technologies)
+// - Optional: adds Freelance tab if you use it
+
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "../integrations/supabase/client";
 import {
   FolderKanban,
@@ -14,10 +21,42 @@ import {
   Palette,
   Database,
   Briefcase,
+  Image as ImageIcon,
+  Eye,
 } from "lucide-react";
 
+// ============================
+// Helpers (SAFE NORMALIZATION)
+// ============================
+const safeArray = (v: any) => (Array.isArray(v) ? v : []);
+const safeString = (v: any) => (typeof v === "string" ? v : "");
+const safeBool = (v: any) => !!v;
+
+const normalizeCategory = (v: any) => {
+  const c = safeString(v).toLowerCase();
+  if (c === "wordpress") return "wordpress";
+  if (c === "coding") return "coding";
+  if (c === "design") return "design";
+  if (c === "freelance") return "freelance";
+  return "coding"; // default
+};
+
+const sortByCreatedAtDesc = (a: any, b: any) => {
+  // if created_at missing, keep stable fallback
+  const at = a?.created_at ? new Date(a.created_at).getTime() : 0;
+  const bt = b?.created_at ? new Date(b.created_at).getTime() : 0;
+  return bt - at;
+};
+
+const getFirstImage = (p: any) => {
+  const imgs = safeArray(p?.images);
+  return imgs?.[0] || "/placeholder.svg";
+};
+
+// ============================
 // Dashboard Layout Component
-function DashboardLayout({ activeTab, setActiveTab, children }) {
+// ============================
+function DashboardLayout({ activeTab, setActiveTab, children }: any) {
   return (
     <div className="flex h-screen bg-gray-900 text-gray-100">
       {/* Sidebar */}
@@ -86,13 +125,15 @@ function DashboardLayout({ activeTab, setActiveTab, children }) {
   );
 }
 
-// Projects Page Component
+// ============================
+// Projects Page (Dashboard)
+// ============================
 function ProjectsPage() {
-  const [projects, setProjects] = useState([]);
-  const [user, setUser] = useState(null);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  const [projectForm, setProjectForm] = useState({
+  const [projectForm, setProjectForm] = useState<any>({
     id: null,
     title: "",
     description: "",
@@ -127,20 +168,45 @@ function ProjectsPage() {
   }, []);
 
   const fetchProjects = async () => {
+    setLoading(true);
+    setUploadError("");
+
     try {
-      // ✅ Newest projects first (last added appears first)
+      // ✅ try ordering by created_at (if exists)
       const { data, error } = await supabase
         .from("projects")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("Fetch error:", error);
-        setUploadError("Failed to fetch projects: " + error.message);
+        // fallback: fetch without order, sort in JS
+        console.warn("Order by created_at failed, fallback:", error.message);
+        const fallback = await supabase.from("projects").select("*");
+        if (fallback.error) {
+          console.error("Fetch error:", fallback.error);
+          setUploadError("Failed to fetch projects: " + fallback.error.message);
+          setProjects([]);
+        } else {
+          const normalized = (fallback.data || []).map((p: any) => ({
+            ...p,
+            technologies: safeArray(p.technologies),
+            images: safeArray(p.images),
+            category: normalizeCategory(p.category),
+            featured: safeBool(p.featured),
+          }));
+          setProjects(normalized.sort(sortByCreatedAtDesc));
+        }
       } else {
-        setProjects(data || []);
+        const normalized = (data || []).map((p: any) => ({
+          ...p,
+          technologies: safeArray(p.technologies),
+          images: safeArray(p.images),
+          category: normalizeCategory(p.category),
+          featured: safeBool(p.featured),
+        }));
+        setProjects(normalized);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Unexpected error:", err);
       setUploadError("An unexpected error occurred");
     } finally {
@@ -148,17 +214,17 @@ function ProjectsPage() {
     }
   };
 
-  const handleFileUpload = async (e) => {
-    const files = e.target.files;
+  const handleFileUpload = async (e: any) => {
+    const files: FileList | null = e.target.files;
     if (!files || files.length === 0) return;
 
     setUploadError("");
     setUploading(true);
 
-    const uploadedUrls = [];
+    const uploadedUrls: string[] = [];
 
     try {
-      for (let file of files) {
+      for (let file of Array.from(files)) {
         if (!file.type.startsWith("image/")) {
           setUploadError("Please upload only image files");
           continue;
@@ -187,53 +253,51 @@ function ProjectsPage() {
       }
 
       if (uploadedUrls.length > 0) {
-        setProjectForm((prev) => ({
+        setProjectForm((prev: any) => ({
           ...prev,
-          images: [...prev.images, ...uploadedUrls],
+          images: [...safeArray(prev.images), ...uploadedUrls],
         }));
       }
     } catch (err) {
+      console.error(err);
       setUploadError("An unexpected error occurred during upload");
     } finally {
       setUploading(false);
     }
   };
 
-  const removeImage = (index) => {
-    setProjectForm((prev) => ({
+  const removeImage = (index: number) => {
+    setProjectForm((prev: any) => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index),
+      images: safeArray(prev.images).filter((_: any, i: number) => i !== index),
     }));
   };
 
-  const handleProjectSubmit = async (e) => {
+  const handleProjectSubmit = async (e: any) => {
     e.preventDefault();
     setUploadError("");
 
     try {
       const techArray = projectForm.technologies
-        ? projectForm.technologies
+        ? safeString(projectForm.technologies)
             .split(",")
             .map((t) => t.trim())
             .filter((t) => t !== "")
         : [];
 
       const payload = {
-        title: projectForm.title,
-        description: projectForm.description,
+        title: safeString(projectForm.title),
+        description: safeString(projectForm.description),
         technologies: techArray,
-        images: projectForm.images,
-        live_url: projectForm.live_url,
-        featured: projectForm.featured,
-        category: projectForm.category,
+        images: safeArray(projectForm.images),
+        live_url: safeString(projectForm.live_url),
+        featured: safeBool(projectForm.featured),
+        category: normalizeCategory(projectForm.category),
       };
 
-      let res;
+      let res: any;
       if (projectForm.id) {
-        res = await supabase
-          .from("projects")
-          .update(payload)
-          .eq("id", projectForm.id);
+        res = await supabase.from("projects").update(payload).eq("id", projectForm.id);
       } else {
         res = await supabase.from("projects").insert([payload]);
       }
@@ -256,41 +320,34 @@ function ProjectsPage() {
         fetchProjects();
       }
     } catch (err) {
+      console.error(err);
       setUploadError("An unexpected error occurred");
     }
   };
 
-  const handleEditProject = (project) => {
+  const handleEditProject = (project: any) => {
     setProjectForm({
       id: project.id,
-      title: project.title,
-      description: project.description,
-      technologies: Array.isArray(project.technologies)
-        ? project.technologies.join(", ")
-        : project.technologies || "",
-      images: Array.isArray(project.images)
-        ? project.images
-        : project.images
-        ? [project.images]
-        : [],
-      live_url: project.live_url || "",
-      featured: !!project.featured,
-      category: project.category || "wordpress",
+      title: safeString(project.title),
+      description: safeString(project.description),
+      technologies: safeArray(project.technologies).join(", "),
+      images: safeArray(project.images),
+      live_url: safeString(project.live_url),
+      featured: safeBool(project.featured),
+      category: normalizeCategory(project.category),
     });
 
     setShowProjectForm(true);
   };
 
-  const handleDeleteProject = async (id) => {
+  const handleDeleteProject = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this project?")) {
       try {
         const { error } = await supabase.from("projects").delete().eq("id", id);
-        if (error) {
-          setUploadError("Failed to delete project: " + error.message);
-        } else {
-          fetchProjects();
-        }
+        if (error) setUploadError("Failed to delete project: " + error.message);
+        else fetchProjects();
       } catch (err) {
+        console.error(err);
         setUploadError("An unexpected error occurred");
       }
     }
@@ -342,9 +399,7 @@ function ProjectsPage() {
         <div className="rounded-lg bg-gray-800 p-6 text-center">
           <FolderKanban size={48} className="mx-auto mb-4 text-gray-400" />
           <h3 className="mb-2 text-xl font-semibold">No projects yet</h3>
-          <p className="mb-4 text-gray-400">
-            Get started by adding your first project
-          </p>
+          <p className="mb-4 text-gray-400">Get started by adding your first project</p>
           <button
             onClick={() => setShowProjectForm(true)}
             className="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
@@ -367,62 +422,65 @@ function ProjectsPage() {
             </thead>
 
             <tbody>
-              {projects.map((p) => (
-                <tr
-                  key={p.id}
-                  className="border-b border-gray-700 hover:bg-gray-700"
-                >
-                  <td className="p-3">
-                    {p.images && p.images.length > 0 && p.images[0] ? (
-                      <img
-                        src={p.images[0]}
-                        alt={p.title}
-                        className="h-16 w-16 rounded object-cover"
-                        onError={(e) => {
-                          e.currentTarget.src =
-                            "https://via.placeholder.com/64?text=Error";
-                        }}
-                      />
-                    ) : (
-                      <div className="flex h-16 w-16 items-center justify-center rounded bg-gray-700 text-xs">
-                        No Image
-                      </div>
-                    )}
-                  </td>
+              {projects.map((p) => {
+                const img = getFirstImage(p);
+                const techText = safeArray(p.technologies).join(", ");
+                return (
+                  <tr
+                    key={p.id}
+                    className="border-b border-gray-700 hover:bg-gray-700"
+                  >
+                    <td className="p-3">
+                      {img ? (
+                        <img
+                          src={img}
+                          alt={p.title || "Project"}
+                          className="h-16 w-16 rounded object-cover"
+                          onError={(e: any) => {
+                            e.currentTarget.src =
+                              "https://via.placeholder.com/64?text=Error";
+                          }}
+                        />
+                      ) : (
+                        <div className="flex h-16 w-16 items-center justify-center rounded bg-gray-700 text-xs">
+                          No Image
+                        </div>
+                      )}
+                    </td>
 
-                  <td className="p-3">{p.title}</td>
-                  <td className="p-3 capitalize">{p.category}</td>
+                    <td className="p-3">{p.title}</td>
+                    <td className="p-3 capitalize">{normalizeCategory(p.category)}</td>
 
-                  <td className="p-3">
-                    {Array.isArray(p.technologies)
-                      ? p.technologies.join(", ")
-                      : p.technologies}
-                  </td>
+                    <td className="p-3">{techText || "-"}</td>
 
-                  <td className="p-3">{p.featured ? "Done" : "False"}</td>
+                    <td className="p-3">{p.featured ? "Done" : "False"}</td>
 
-                  <td className="flex space-x-2 p-3">
-                    <button
-                      onClick={() => handleEditProject(p)}
-                      className="rounded bg-yellow-500 px-3 py-1 text-white hover:bg-yellow-600"
-                    >
-                      <Edit3 size={16} />
-                    </button>
+                    <td className="flex space-x-2 p-3">
+                      <button
+                        onClick={() => handleEditProject(p)}
+                        className="rounded bg-yellow-500 px-3 py-1 text-white hover:bg-yellow-600"
+                        title="Edit"
+                      >
+                        <Edit3 size={16} />
+                      </button>
 
-                    <button
-                      onClick={() => handleDeleteProject(p.id)}
-                      className="rounded bg-red-600 px-3 py-1 text-white hover:bg-red-700"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                      <button
+                        onClick={() => handleDeleteProject(p.id)}
+                        className="rounded bg-red-600 px-3 py-1 text-white hover:bg-red-700"
+                        title="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
 
+      {/* Form Drawer */}
       {showProjectForm && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black bg-opacity-50">
           <div className="w-full max-w-md overflow-y-auto bg-gray-900 p-6">
@@ -442,7 +500,7 @@ function ProjectsPage() {
                 type="text"
                 placeholder="Title"
                 value={projectForm.title}
-                onChange={(e) =>
+                onChange={(e: any) =>
                   setProjectForm({ ...projectForm, title: e.target.value })
                 }
                 className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
@@ -452,11 +510,8 @@ function ProjectsPage() {
               <textarea
                 placeholder="Description"
                 value={projectForm.description}
-                onChange={(e) =>
-                  setProjectForm({
-                    ...projectForm,
-                    description: e.target.value,
-                  })
+                onChange={(e: any) =>
+                  setProjectForm({ ...projectForm, description: e.target.value })
                 }
                 className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
                 rows={3}
@@ -466,11 +521,8 @@ function ProjectsPage() {
                 type="text"
                 placeholder="Technologies (comma separated)"
                 value={projectForm.technologies}
-                onChange={(e) =>
-                  setProjectForm({
-                    ...projectForm,
-                    technologies: e.target.value,
-                  })
+                onChange={(e: any) =>
+                  setProjectForm({ ...projectForm, technologies: e.target.value })
                 }
                 className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
               />
@@ -485,30 +537,24 @@ function ProjectsPage() {
                   className="w-full text-sm text-gray-300 file:mr-4 file:rounded-full file:border-0 file:bg-indigo-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-indigo-700"
                   disabled={uploading}
                 />
-
-                <p className="mt-1 text-xs text-gray-400">
-                  You can select multiple images
-                </p>
-
+                <p className="mt-1 text-xs text-gray-400">You can select multiple images</p>
                 {uploading && (
-                  <p className="mt-1 text-sm text-yellow-400">
-                    Uploading images...
-                  </p>
+                  <p className="mt-1 text-sm text-yellow-400">Uploading images...</p>
                 )}
               </div>
 
-              {projectForm.images.length > 0 && (
+              {safeArray(projectForm.images).length > 0 && (
                 <div className="mt-3">
                   <p className="mb-2 text-sm">Image Previews:</p>
 
                   <div className="flex flex-wrap gap-2">
-                    {projectForm.images.map((img, i) => (
+                    {safeArray(projectForm.images).map((img: string, i: number) => (
                       <div key={i} className="relative">
                         <img
                           src={img}
                           alt={`preview-${i}`}
                           className="h-20 w-20 rounded-lg border border-gray-700 object-cover"
-                          onError={(e) => {
+                          onError={(e: any) => {
                             e.currentTarget.src =
                               "https://via.placeholder.com/80?text=Error";
                           }}
@@ -517,6 +563,7 @@ function ProjectsPage() {
                           type="button"
                           onClick={() => removeImage(i)}
                           className="absolute -right-2 -top-2 rounded-full bg-red-600 p-1 text-white"
+                          title="Remove"
                         >
                           <Trash2 size={12} />
                         </button>
@@ -530,7 +577,7 @@ function ProjectsPage() {
                 type="url"
                 placeholder="Live URL"
                 value={projectForm.live_url}
-                onChange={(e) =>
+                onChange={(e: any) =>
                   setProjectForm({ ...projectForm, live_url: e.target.value })
                 }
                 className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
@@ -538,7 +585,7 @@ function ProjectsPage() {
 
               <select
                 value={projectForm.category}
-                onChange={(e) =>
+                onChange={(e: any) =>
                   setProjectForm({ ...projectForm, category: e.target.value })
                 }
                 className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
@@ -546,17 +593,15 @@ function ProjectsPage() {
                 <option value="wordpress">Wordpress</option>
                 <option value="coding">Coding</option>
                 <option value="design">Design</option>
+                <option value="freelance">Freelance</option>
               </select>
 
               <label className="flex items-center space-x-2">
                 <input
                   type="checkbox"
-                  checked={projectForm.featured}
-                  onChange={(e) =>
-                    setProjectForm({
-                      ...projectForm,
-                      featured: e.target.checked,
-                    })
+                  checked={!!projectForm.featured}
+                  onChange={(e: any) =>
+                    setProjectForm({ ...projectForm, featured: e.target.checked })
                   }
                 />
                 <span>Featured</span>
@@ -590,12 +635,14 @@ function ProjectsPage() {
   );
 }
 
-// Skills Page Component
+// ============================
+// Skills Page (unchanged logic, just safer array rendering)
+// ============================
 function SkillsPage() {
-  const [skills, setSkills] = useState([]);
+  const [skills, setSkills] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [skillForm, setSkillForm] = useState({
+  const [skillForm, setSkillForm] = useState<any>({
     id: null,
     title: "",
     category: "",
@@ -612,16 +659,8 @@ function SkillsPage() {
     { value: "Server", label: "Server", icon: <Server className="h-4 w-4" /> },
     { value: "Brain", label: "Brain", icon: <Brain className="h-4 w-4" /> },
     { value: "Wrench", label: "Wrench", icon: <Wrench className="h-4 w-4" /> },
-    {
-      value: "Palette",
-      label: "Palette",
-      icon: <Palette className="h-4 w-4" />,
-    },
-    {
-      value: "Database",
-      label: "Database",
-      icon: <Database className="h-4 w-4" />,
-    },
+    { value: "Palette", label: "Palette", icon: <Palette className="h-4 w-4" /> },
+    { value: "Database", label: "Database", icon: <Database className="h-4 w-4" /> },
   ];
 
   const colorOptions = ["primary", "secondary", "accent"];
@@ -644,12 +683,10 @@ function SkillsPage() {
   }, []);
 
   const fetchSkills = async () => {
+    setLoading(true);
+    setUploadError("");
     try {
-      const { data, error } = await supabase
-        .from("skills")
-        .select("*")
-        .order("title");
-
+      const { data, error } = await supabase.from("skills").select("*").order("title");
       if (error) {
         console.error("Fetch skills error:", error);
         setUploadError("Failed to fetch skills: " + error.message);
@@ -664,39 +701,32 @@ function SkillsPage() {
     }
   };
 
-  const handleSkillSubmit = async (e) => {
+  const handleSkillSubmit = async (e: any) => {
     e.preventDefault();
     setUploadError("");
 
     try {
       const skillsArray = skillForm.skills
-        ? skillForm.skills
+        ? safeString(skillForm.skills)
             .split(",")
             .map((s) => s.trim())
             .filter((s) => s !== "")
         : [];
 
       const payload = {
-        title: skillForm.title,
-        category: skillForm.category,
+        title: safeString(skillForm.title),
+        category: safeString(skillForm.category),
         skills: skillsArray,
-        icon_name: skillForm.icon_name,
-        color: skillForm.color,
+        icon_name: safeString(skillForm.icon_name),
+        color: safeString(skillForm.color),
       };
 
-      let res;
-      if (skillForm.id) {
-        res = await supabase
-          .from("skills")
-          .update(payload)
-          .eq("id", skillForm.id);
-      } else {
-        res = await supabase.from("skills").insert([payload]);
-      }
+      let res: any;
+      if (skillForm.id) res = await supabase.from("skills").update(payload).eq("id", skillForm.id);
+      else res = await supabase.from("skills").insert([payload]);
 
-      if (res.error) {
-        setUploadError(res.error.message);
-      } else {
+      if (res.error) setUploadError(res.error.message);
+      else {
         setSkillForm({
           id: null,
           title: "",
@@ -709,41 +739,37 @@ function SkillsPage() {
         fetchSkills();
       }
     } catch (err) {
+      console.error(err);
       setUploadError("An unexpected error occurred");
     }
   };
 
-  const handleEditSkill = (skill) => {
+  const handleEditSkill = (skill: any) => {
     setSkillForm({
       id: skill.id,
-      title: skill.title,
-      category: skill.category || "",
-      skills: Array.isArray(skill.skills)
-        ? skill.skills.join(", ")
-        : skill.skills || "",
-      icon_name: skill.icon_name || "Code",
-      color: skill.color || "primary",
+      title: safeString(skill.title),
+      category: safeString(skill.category),
+      skills: safeArray(skill.skills).join(", "),
+      icon_name: safeString(skill.icon_name) || "Code",
+      color: safeString(skill.color) || "primary",
     });
-
     setShowSkillForm(true);
   };
 
-  const handleDeleteSkill = async (id) => {
+  const handleDeleteSkill = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this skill category?")) {
       try {
         const { error } = await supabase.from("skills").delete().eq("id", id);
-        if (error) {
-          setUploadError("Failed to delete skill: " + error.message);
-        } else {
-          fetchSkills();
-        }
+        if (error) setUploadError("Failed to delete skill: " + error.message);
+        else fetchSkills();
       } catch (err) {
+        console.error(err);
         setUploadError("An unexpected error occurred");
       }
     }
   };
 
-  const renderIcon = (iconName) => {
+  const renderIcon = (iconName: string) => {
     switch (iconName) {
       case "Code":
         return <Code className="h-5 w-5" />;
@@ -806,9 +832,7 @@ function SkillsPage() {
         <div className="rounded-lg bg-gray-800 p-6 text-center">
           <Code size={48} className="mx-auto mb-4 text-gray-400" />
           <h3 className="mb-2 text-xl font-semibold">No skills yet</h3>
-          <p className="mb-4 text-gray-400">
-            Get started by adding your first skill category
-          </p>
+          <p className="mb-4 text-gray-400">Get started by adding your first skill category</p>
           <button
             onClick={() => setShowSkillForm(true)}
             className="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
@@ -832,10 +856,7 @@ function SkillsPage() {
 
             <tbody>
               {skills.map((s) => (
-                <tr
-                  key={s.id}
-                  className="border-b border-gray-700 hover:bg-gray-700"
-                >
+                <tr key={s.id} className="border-b border-gray-700 hover:bg-gray-700">
                   <td className="p-3">
                     <div className="rounded-full bg-primary/10 p-2 text-primary">
                       {renderIcon(s.icon_name)}
@@ -846,7 +867,7 @@ function SkillsPage() {
                   <td className="p-3 capitalize">{s.category}</td>
 
                   <td className="p-3">
-                    {Array.isArray(s.skills) ? s.skills.join(", ") : s.skills}
+                    {safeArray(s.skills).length ? safeArray(s.skills).join(", ") : "-"}
                   </td>
 
                   <td className="p-3 capitalize">{s.color}</td>
@@ -855,6 +876,7 @@ function SkillsPage() {
                     <button
                       onClick={() => handleEditSkill(s)}
                       className="rounded bg-yellow-500 px-3 py-1 text-white hover:bg-yellow-600"
+                      title="Edit"
                     >
                       <Edit3 size={16} />
                     </button>
@@ -862,6 +884,7 @@ function SkillsPage() {
                     <button
                       onClick={() => handleDeleteSkill(s.id)}
                       className="rounded bg-red-600 px-3 py-1 text-white hover:bg-red-700"
+                      title="Delete"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -873,6 +896,7 @@ function SkillsPage() {
         </div>
       )}
 
+      {/* Skill Form Drawer */}
       {showSkillForm && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black bg-opacity-50">
           <div className="w-full max-w-md overflow-y-auto bg-gray-900 p-6">
@@ -892,9 +916,7 @@ function SkillsPage() {
                 type="text"
                 placeholder="Title"
                 value={skillForm.title}
-                onChange={(e) =>
-                  setSkillForm({ ...skillForm, title: e.target.value })
-                }
+                onChange={(e: any) => setSkillForm({ ...skillForm, title: e.target.value })}
                 className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
                 required
               />
@@ -903,9 +925,7 @@ function SkillsPage() {
                 type="text"
                 placeholder="Category (e.g., development, design, tools)"
                 value={skillForm.category}
-                onChange={(e) =>
-                  setSkillForm({ ...skillForm, category: e.target.value })
-                }
+                onChange={(e: any) => setSkillForm({ ...skillForm, category: e.target.value })}
                 className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
                 required
               />
@@ -913,9 +933,7 @@ function SkillsPage() {
               <textarea
                 placeholder="Skills (comma separated)"
                 value={skillForm.skills}
-                onChange={(e) =>
-                  setSkillForm({ ...skillForm, skills: e.target.value })
-                }
+                onChange={(e: any) => setSkillForm({ ...skillForm, skills: e.target.value })}
                 className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
                 rows={3}
                 required
@@ -933,9 +951,7 @@ function SkillsPage() {
                           ? "border-indigo-500 bg-indigo-500/10"
                           : "border-gray-700 hover:border-gray-600"
                       }`}
-                      onClick={() =>
-                        setSkillForm({ ...skillForm, icon_name: icon.value })
-                      }
+                      onClick={() => setSkillForm({ ...skillForm, icon_name: icon.value })}
                     >
                       {icon.icon}
                       <span className="ml-2 text-sm">{icon.label}</span>
@@ -997,12 +1013,14 @@ function SkillsPage() {
   );
 }
 
-// Experiences Page Component
+// ============================
+// Experiences Page (safe arrays)
+// ============================
 function ExperiencesPage() {
-  const [experiences, setExperiences] = useState([]);
+  const [experiences, setExperiences] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [experienceForm, setExperienceForm] = useState({
+  const [experienceForm, setExperienceForm] = useState<any>({
     id: null,
     title: "",
     company: "",
@@ -1044,6 +1062,8 @@ function ExperiencesPage() {
   }, []);
 
   const fetchExperiences = async () => {
+    setLoading(true);
+    setUploadError("");
     try {
       const { data, error } = await supabase
         .from("experiences")
@@ -1064,42 +1084,35 @@ function ExperiencesPage() {
     }
   };
 
-  const handleExperienceSubmit = async (e) => {
+  const handleExperienceSubmit = async (e: any) => {
     e.preventDefault();
     setUploadError("");
 
     try {
       const techArray = experienceForm.technologies
-        ? experienceForm.technologies
+        ? safeString(experienceForm.technologies)
             .split(",")
             .map((t) => t.trim())
             .filter((t) => t !== "")
         : [];
 
       const payload = {
-        title: experienceForm.title,
-        company: experienceForm.company,
-        period: experienceForm.period,
-        location: experienceForm.location,
-        type: experienceForm.type,
-        description: experienceForm.description,
+        title: safeString(experienceForm.title),
+        company: safeString(experienceForm.company),
+        period: safeString(experienceForm.period),
+        location: safeString(experienceForm.location),
+        type: safeString(experienceForm.type),
+        description: safeString(experienceForm.description),
         technologies: techArray,
-        link: experienceForm.link,
+        link: safeString(experienceForm.link),
       };
 
-      let res;
-      if (experienceForm.id) {
-        res = await supabase
-          .from("experiences")
-          .update(payload)
-          .eq("id", experienceForm.id);
-      } else {
-        res = await supabase.from("experiences").insert([payload]);
-      }
+      let res: any;
+      if (experienceForm.id) res = await supabase.from("experiences").update(payload).eq("id", experienceForm.id);
+      else res = await supabase.from("experiences").insert([payload]);
 
-      if (res.error) {
-        setUploadError(res.error.message);
-      } else {
+      if (res.error) setUploadError(res.error.message);
+      else {
         setExperienceForm({
           id: null,
           title: "",
@@ -1116,42 +1129,35 @@ function ExperiencesPage() {
         fetchExperiences();
       }
     } catch (err) {
+      console.error(err);
       setUploadError("An unexpected error occurred");
     }
   };
 
-  const handleEditExperience = (experience) => {
+  const handleEditExperience = (experience: any) => {
     setExperienceForm({
       id: experience.id,
-      title: experience.title,
-      company: experience.company,
-      period: experience.period,
-      location: experience.location,
-      type: experience.type,
-      description: experience.description,
-      technologies: Array.isArray(experience.technologies)
-        ? experience.technologies.join(", ")
-        : experience.technologies || "",
-      link: experience.link || "",
+      title: safeString(experience.title),
+      company: safeString(experience.company),
+      period: safeString(experience.period),
+      location: safeString(experience.location),
+      type: safeString(experience.type),
+      description: safeString(experience.description),
+      technologies: safeArray(experience.technologies).join(", "),
+      link: safeString(experience.link),
     });
 
     setShowExperienceForm(true);
   };
 
-  const handleDeleteExperience = async (id) => {
+  const handleDeleteExperience = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this experience?")) {
       try {
-        const { error } = await supabase
-          .from("experiences")
-          .delete()
-          .eq("id", id);
-
-        if (error) {
-          setUploadError("Failed to delete experience: " + error.message);
-        } else {
-          fetchExperiences();
-        }
+        const { error } = await supabase.from("experiences").delete().eq("id", id);
+        if (error) setUploadError("Failed to delete experience: " + error.message);
+        else fetchExperiences();
       } catch (err) {
+        console.error(err);
         setUploadError("An unexpected error occurred");
       }
     }
@@ -1204,9 +1210,7 @@ function ExperiencesPage() {
         <div className="rounded-lg bg-gray-800 p-6 text-center">
           <Briefcase size={48} className="mx-auto mb-4 text-gray-400" />
           <h3 className="mb-2 text-xl font-semibold">No experiences yet</h3>
-          <p className="mb-4 text-gray-400">
-            Get started by adding your first experience
-          </p>
+          <p className="mb-4 text-gray-400">Get started by adding your first experience</p>
           <button
             onClick={() => setShowExperienceForm(true)}
             className="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
@@ -1239,20 +1243,22 @@ function ExperiencesPage() {
                   <td className="p-3">{exp.period}</td>
                   <td className="p-3 capitalize">{exp.type}</td>
                   <td className="p-3">
-                    {Array.isArray(exp.technologies)
-                      ? exp.technologies.join(", ")
-                      : exp.technologies}
+                    {safeArray(exp.technologies).length
+                      ? safeArray(exp.technologies).join(", ")
+                      : "-"}
                   </td>
                   <td className="flex space-x-2 p-3">
                     <button
                       onClick={() => handleEditExperience(exp)}
                       className="rounded bg-yellow-500 px-3 py-1 text-white hover:bg-yellow-600"
+                      title="Edit"
                     >
                       <Edit3 size={16} />
                     </button>
                     <button
                       onClick={() => handleDeleteExperience(exp.id)}
                       className="rounded bg-red-600 px-3 py-1 text-white hover:bg-red-700"
+                      title="Delete"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -1283,7 +1289,7 @@ function ExperiencesPage() {
                 type="text"
                 placeholder="Title (e.g., Web Developer)"
                 value={experienceForm.title}
-                onChange={(e) =>
+                onChange={(e: any) =>
                   setExperienceForm({ ...experienceForm, title: e.target.value })
                 }
                 className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
@@ -1294,11 +1300,8 @@ function ExperiencesPage() {
                 type="text"
                 placeholder="Company"
                 value={experienceForm.company}
-                onChange={(e) =>
-                  setExperienceForm({
-                    ...experienceForm,
-                    company: e.target.value,
-                  })
+                onChange={(e: any) =>
+                  setExperienceForm({ ...experienceForm, company: e.target.value })
                 }
                 className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
                 required
@@ -1308,11 +1311,8 @@ function ExperiencesPage() {
                 type="text"
                 placeholder="Period (e.g., 4/2025 - Present)"
                 value={experienceForm.period}
-                onChange={(e) =>
-                  setExperienceForm({
-                    ...experienceForm,
-                    period: e.target.value,
-                  })
+                onChange={(e: any) =>
+                  setExperienceForm({ ...experienceForm, period: e.target.value })
                 }
                 className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
                 required
@@ -1322,11 +1322,8 @@ function ExperiencesPage() {
                 type="text"
                 placeholder="Location (e.g., On-site, Remote)"
                 value={experienceForm.location}
-                onChange={(e) =>
-                  setExperienceForm({
-                    ...experienceForm,
-                    location: e.target.value,
-                  })
+                onChange={(e: any) =>
+                  setExperienceForm({ ...experienceForm, location: e.target.value })
                 }
                 className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
                 required
@@ -1334,7 +1331,7 @@ function ExperiencesPage() {
 
               <select
                 value={experienceForm.type}
-                onChange={(e) =>
+                onChange={(e: any) =>
                   setExperienceForm({ ...experienceForm, type: e.target.value })
                 }
                 className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
@@ -1351,11 +1348,8 @@ function ExperiencesPage() {
               <textarea
                 placeholder="Description"
                 value={experienceForm.description}
-                onChange={(e) =>
-                  setExperienceForm({
-                    ...experienceForm,
-                    description: e.target.value,
-                  })
+                onChange={(e: any) =>
+                  setExperienceForm({ ...experienceForm, description: e.target.value })
                 }
                 className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
                 rows={3}
@@ -1366,11 +1360,8 @@ function ExperiencesPage() {
                 type="text"
                 placeholder="Technologies (comma separated)"
                 value={experienceForm.technologies}
-                onChange={(e) =>
-                  setExperienceForm({
-                    ...experienceForm,
-                    technologies: e.target.value,
-                  })
+                onChange={(e: any) =>
+                  setExperienceForm({ ...experienceForm, technologies: e.target.value })
                 }
                 className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
               />
@@ -1379,7 +1370,7 @@ function ExperiencesPage() {
                 type="url"
                 placeholder="Company URL (optional)"
                 value={experienceForm.link}
-                onChange={(e) =>
+                onChange={(e: any) =>
                   setExperienceForm({ ...experienceForm, link: e.target.value })
                 }
                 className="w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
@@ -1412,14 +1403,16 @@ function ExperiencesPage() {
   );
 }
 
-// Contacts Page Component
+// ============================
+// Contacts Page (same)
+// ============================
 function ContactsPage() {
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    let channel;
+    let channel: any;
 
     const fetchMessages = async () => {
       try {
@@ -1451,7 +1444,7 @@ function ContactsPage() {
         .on(
           "postgres_changes",
           { event: "INSERT", schema: "public", table: "contact_messages" },
-          (payload) => {
+          (payload: any) => {
             const newRow = payload.new;
             setMessages((prev) => [newRow, ...prev]);
           }
@@ -1491,9 +1484,7 @@ function ContactsPage() {
         <div className="rounded-lg bg-gray-800 p-6 text-center">
           <Mail size={48} className="mx-auto mb-4 text-gray-400" />
           <h3 className="mb-2 text-xl font-semibold">No messages yet</h3>
-          <p className="mb-4 text-gray-400">
-            Messages sent via the contact form will appear here.
-          </p>
+          <p className="mb-4 text-gray-400">Messages sent via the contact form will appear here.</p>
         </div>
       ) : (
         <div className="overflow-x-auto rounded-lg bg-gray-800 shadow">
@@ -1517,13 +1508,9 @@ function ContactsPage() {
                   <td className="p-3 align-top">{m.name}</td>
                   <td className="p-3 align-top">{m.email}</td>
                   <td className="p-3 align-top">{m.subject}</td>
-                  <td className="max-w-xl whitespace-pre-wrap p-3 align-top">
-                    {m.message}
-                  </td>
+                  <td className="max-w-xl whitespace-pre-wrap p-3 align-top">{m.message}</td>
                   <td className="p-3 align-top">
-                    {m.created_at
-                      ? new Date(m.created_at).toLocaleString()
-                      : "-"}
+                    {m.created_at ? new Date(m.created_at).toLocaleString() : "-"}
                   </td>
                 </tr>
               ))}
@@ -1535,7 +1522,9 @@ function ContactsPage() {
   );
 }
 
+// ============================
 // Main Dashboard Component
+// ============================
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("projects");
 
@@ -1546,5 +1535,167 @@ export default function Dashboard() {
       {activeTab === "contacts" && <ContactsPage />}
       {activeTab === "experiences" && <ExperiencesPage />}
     </DashboardLayout>
+  );
+}
+
+/* ============================================================
+   ✅ FRONT-END PROJECTS COMPONENT (Tabs show ALL projects)
+   Put this in your website Projects section file.
+   No "Show more". Safe against null technologies/images/category.
+============================================================ */
+
+export function ProjectsSectionFrontend() {
+  const [projects, setProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching projects:", error.message, error);
+        setProjects([]);
+        setLoading(false);
+        return;
+      }
+
+      const normalized = (data || []).map((p: any) => ({
+        ...p,
+        technologies: safeArray(p.technologies),
+        images: safeArray(p.images),
+        category: normalizeCategory(p.category),
+        featured: safeBool(p.featured),
+      }));
+
+      setProjects(normalized);
+      setLoading(false);
+    };
+
+    fetchProjects();
+  }, []);
+
+  const codingProjects = useMemo(
+    () => projects.filter((p) => normalizeCategory(p.category) === "coding"),
+    [projects]
+  );
+  const wordpressProjects = useMemo(
+    () => projects.filter((p) => normalizeCategory(p.category) === "wordpress"),
+    [projects]
+  );
+  const designProjects = useMemo(
+    () => projects.filter((p) => normalizeCategory(p.category) === "design"),
+    [projects]
+  );
+  const freelanceProjects = useMemo(
+    () => projects.filter((p) => normalizeCategory(p.category) === "freelance"),
+    [projects]
+  );
+
+  if (loading) return <p className="text-center">Loading projects...</p>;
+
+  const ProjectCard = ({ project }: any) => {
+    const techs = safeArray(project.technologies);
+    const imgs = safeArray(project.images);
+    const cover = imgs[0] || "/placeholder.svg";
+
+    return (
+      <div className="group overflow-hidden rounded-xl border border-white/10 bg-white/5">
+        <div className="relative overflow-hidden">
+          <img
+            src={cover}
+            alt={project.title || "Project"}
+            className="h-60 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            onError={(e: any) => (e.currentTarget.src = "/placeholder.svg")}
+          />
+        </div>
+
+        <div className="p-5">
+          <h3 className="text-lg font-semibold">{project.title}</h3>
+          <p className="mt-2 text-sm text-white/70">{project.description}</p>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            {techs.map((t: string) => (
+              <span
+                key={t}
+                className="rounded-full bg-white/10 px-3 py-1 text-xs text-white/90"
+              >
+                {t}
+              </span>
+            ))}
+          </div>
+
+          <div className="mt-4 flex items-center gap-3">
+            {project.live_url ? (
+              <a
+                href={project.live_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center rounded-lg bg-indigo-600 px-3 py-2 text-sm text-white hover:bg-indigo-700"
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                Live Demo
+              </a>
+            ) : null}
+
+            {imgs.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => window.open(imgs[0], "_blank")}
+                className="inline-flex items-center rounded-lg bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/15"
+              >
+                <ImageIcon className="mr-2 h-4 w-4" />
+                Show Media
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <section id="projects" className="py-20">
+      <div className="container mx-auto px-4">
+        <h2 className="mb-10 text-center text-4xl font-bold">All Projects</h2>
+
+        {/* Simple Tabs without "show more" */}
+        <div className="mb-6 flex flex-wrap justify-center gap-2">
+          <a href="#coding" className="rounded-lg bg-white/10 px-4 py-2">Coding</a>
+          <a href="#wordpress" className="rounded-lg bg-white/10 px-4 py-2">Wordpress</a>
+          <a href="#design" className="rounded-lg bg-white/10 px-4 py-2">Design</a>
+          {freelanceProjects.length > 0 && (
+            <a href="#freelance" className="rounded-lg bg-white/10 px-4 py-2">Freelance</a>
+          )}
+        </div>
+
+        <h3 id="coding" className="mb-4 text-2xl font-semibold">Coding</h3>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {codingProjects.map((p) => <ProjectCard key={p.id} project={p} />)}
+        </div>
+
+        <h3 id="wordpress" className="mt-10 mb-4 text-2xl font-semibold">Wordpress</h3>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {wordpressProjects.map((p) => <ProjectCard key={p.id} project={p} />)}
+        </div>
+
+        <h3 id="design" className="mt-10 mb-4 text-2xl font-semibold">Design</h3>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {designProjects.map((p) => <ProjectCard key={p.id} project={p} />)}
+        </div>
+
+        {freelanceProjects.length > 0 && (
+          <>
+            <h3 id="freelance" className="mt-10 mb-4 text-2xl font-semibold">Freelance</h3>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {freelanceProjects.map((p) => <ProjectCard key={p.id} project={p} />)}
+            </div>
+          </>
+        )}
+      </div>
+    </section>
   );
 }
